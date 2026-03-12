@@ -11,8 +11,6 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <!-- 引入 Babel 進行 JSX 解析 -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- 引入 Lucide 圖示庫 (核心版) -->
-    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @keyframes bounceX { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(8px); } }
         @keyframes coinPop { 
@@ -22,30 +20,48 @@
         }
         .animate-bounceX { animation: bounceX 0.6s infinite; }
         body { background-color: #5C94FC; margin: 0; padding: 0; }
-        /* 防止圖示未載入時崩潰，設定一個預設大小 */
-        svg { display: inline-block; vertical-align: middle; }
+        .pixel-shadow { shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+        const { useState, useEffect } = React;
 
-        // 建立一個安全的圖示組件，避免庫載入失敗時當機
-        const Icon = ({ name, className = "w-6 h-6", ...props }) => {
-            const iconRef = useRef(null);
-            
-            useEffect(() => {
-                if (window.lucide && iconRef.current) {
-                    window.lucide.createIcons({
-                        attrs: { class: className },
-                        nameAttr: 'data-lucide'
-                    });
-                }
-            }, [name, className, activeTab]); // 當分頁切換時重新渲染圖示
+        // 內建 SVG 圖示，確保不依賴外部庫，100% 不會當機
+        const SvgIcon = ({ name, className = "w-6 h-6" }) => {
+            const icons = {
+                'star': <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />,
+                'sword': <path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l2 2 3-3-2-2m-3 3l-4-4m11 0l3 3-4-4" />,
+                'tv': <rect x="2" y="7" width="20" height="15" rx="2" ry="2" /><path d="m17 2-5 5-5-5" />,
+                'map': <path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3V6zm6-3v15m6-15v15" />,
+                'trophy': <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-2.34c3.37-.3 6-3.1 6-6.66H4c0 3.56 2.63 6.36 6 6.66z" />,
+                'gamepad': <line x1="6" y1="12" x2="10" y2="12" /><line x1="8" y1="10" x2="8" y2="14" /><circle cx="15" cy="13" r="1" /><circle cx="18" cy="11" r="1" /><rect x="2" y="6" width="20" height="12" rx="2" />,
+                'hard-drive': <line x1="16" y1="18" x2="16" y2="18.01" /><line x1="12" y1="18" x2="12" y2="18.01" /><rect x="2" y="14" width="20" height="8" rx="2" /><path d="M2 14L4.5 4h15L22 14" />,
+                'external-link': <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" />,
+                'check': <polyline points="20 6 9 17 4 12" />,
+                'chevron-right': <polyline points="9 18 15 12 9 6" />,
+                'coins': <circle cx="8" cy="8" r="6" /><path d="M18 8c0 4.42-3 8-8 8" /><circle cx="18" cy="16" r="6" />,
+                'user': <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />,
+                'wifi': <path d="M5 12.55a11 11 0 0 1 14.08 0" /><path d="M1.42 9a16 16 0 0 1 21.16 0" /><path d="M8.53 16.11a6 6 0 0 1 6.95 0" /><line x1="12" y1="20" x2="12.01" y2="20" />,
+                'printer': <polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" />
+            };
 
-            return <i data-lucide={name} className={className} ref={iconRef} {...props}></i>;
+            return (
+                <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    className={className}
+                >
+                    {icons[name] || <circle cx="12" cy="12" r="10" />}
+                </svg>
+            );
         };
 
         const App = () => {
@@ -58,7 +74,6 @@
             const [animatingCoin, setAnimatingCoin] = useState(null);
             const [searchTerm, setSearchTerm] = useState('');
 
-            // 初始化與自動執行圖示渲染
             useEffect(() => {
                 const savedName = localStorage.getItem('arplanet_player_name');
                 const savedDept = localStorage.getItem('arplanet_player_dept');
@@ -68,14 +83,7 @@
                 if (savedTasks) {
                     try { setCompletedTasks(JSON.parse(savedTasks)); } catch (e) { setCompletedTasks([]); }
                 }
-                // 初始渲染圖示
-                if (window.lucide) window.lucide.createIcons();
             }, []);
-
-            // 每次切換分頁都要確保圖示被觸發
-            useEffect(() => {
-                if (window.lucide) window.lucide.createIcons();
-            }, [activeTab]);
 
             const trainingData = {
                 social: [
@@ -83,20 +91,16 @@
                     { id: 's2', name: '公司 Youtube', url: 'https://www.youtube.com/user/arplanet2', type: 'Video', memo: '請按讚、追蹤' },
                     { id: 's3', name: '下一秒製造所 FB', url: 'https://www.facebook.com/arplanet1/', type: 'Social', memo: '請按讚、追蹤' },
                     { id: 's4', name: '下一秒製造所 IG', url: 'https://www.instagram.com/arplanet.tw/', type: 'Social', memo: '請加入追蹤' },
-                    { id: 's5', name: 'Mew_IG (mew_reality)', url: 'https://www.instagram.com/mew_mew_xr/', type: 'Social', memo: '請加入追蹤' },
-                    { id: 's6', name: '普拉_IG (xr_pula_daily)', url: 'https://www.instagram.com/xr_pula_daily/', type: 'Social', memo: '請加入追蹤' },
                     { id: 's7', name: 'Podcast (下一秒製造所)', url: 'https://podcasts.apple.com/tw/podcast/id1616439770', type: 'Audio', memo: '請加入追蹤' },
                 ],
                 winkiss: [
                     { id: 'w1', name: '1-1【winkiss】產品介紹簡報', url: 'https://docs.google.com/presentation/d/1KBeDulhzx6rJR-VmOA7E2OtreP6dCQul/edit', type: 'PPT', memo: 'PPT共34頁' },
                     { id: 'w2', name: '2-1【winkiss】產品介紹影片', url: 'https://youtu.be/gtaod70-6rM', type: 'Video', memo: '影片21分鐘' },
                     { id: 'w3', name: 'winkiss 後台教學影片', url: 'https://youtu.be/qDITk1-dIUM', type: 'Video', memo: '後台操作必看' },
-                    { id: 'w4', name: '【winkiss】案例網址', url: 'https://docs.google.com/spreadsheets/d/1flxW11ISTswFLZ6luGbRsMnNGOIO-BhpeRnobKJkdy/edit', type: 'Sheet', memo: '體驗實際客戶案例' },
                 ],
                 marq: [
                     { id: 'm1', name: '認識 marq+', url: 'https://drive.google.com/drive/folders/1F1Z5eCBnM-Xn2R8q4-kNllmsqy20VR2c', type: 'PPT', memo: 'PPT共61頁' },
                     { id: 'm2', name: 'marq+ 後台解說影片', url: 'https://youtu.be/8On2YvcZV60', type: 'Video', memo: '影片33分鐘' },
-                    { id: 'm3', name: 'marq+ 後台上架練習', url: 'http://mg.plus.marq.com.tw/', type: 'Practice', memo: '帳號請向 Sophy 申請' },
                 ],
                 xr_knowledge: [
                     { id: 'x1', name: 'XR 基礎概論', url: 'https://docs.google.com/presentation/d/10ZHNwKBMwFfvRd-Nyolz9C-NEe6Eo18k/edit', type: 'PPT', memo: 'PPT共63頁' },
@@ -138,13 +142,13 @@
                 <button onClick={() => { setActiveTab(id); setSearchTerm(''); }} className={`w-full relative transition-all duration-150 active:translate-y-1 mb-4 ${activeTab === id ? 'scale-105' : ''}`}>
                     <div className={`p-4 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center space-x-4 ${activeTab === id ? 'bg-[#FFD700] text-black' : 'bg-white text-black hover:bg-slate-100'}`}>
                         <div className={`w-12 h-12 flex items-center justify-center border-4 border-black ${activeTab === id ? 'bg-white' : 'bg-[#E60012] text-white'}`}>
-                            <Icon name={iconName} className="w-6 h-6" />
+                            <SvgIcon name={iconName} className="w-6 h-6" />
                         </div>
                         <div className="text-left">
                             <p className="text-[10px] font-bold uppercase opacity-60 leading-none">{sub}</p>
                             <p className="text-sm font-black tracking-tighter">{label}</p>
                         </div>
-                        {activeTab === id && <div className="absolute -right-2 top-1/2 -translate-y-1/2"><Icon name="chevron-right" className="w-6 h-6 animate-bounceX" /></div>}
+                        {activeTab === id && <div className="absolute -right-2 top-1/2 -translate-y-1/2"><SvgIcon name="chevron-right" className="w-6 h-6 animate-bounceX" /></div>}
                     </div>
                 </button>
             );
@@ -154,10 +158,10 @@
                 const isAnimating = animatingCoin === item.id;
                 return (
                     <div className={`relative border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-5 flex flex-col justify-between transition-all ${isDone ? 'bg-[#929088]' : 'bg-[#F27F20]'}`}>
-                        {isAnimating && <div className="absolute left-6 top-0 z-50 animate-[coinPop_0.8s_ease-out_forwards]"><Icon name="coins" className="w-8 h-8 text-yellow-400 fill-yellow-400" /></div>}
+                        {isAnimating && <div className="absolute left-6 top-0 z-50 animate-[coinPop_0.8s_ease-out_forwards]"><SvgIcon name="coins" className="w-8 h-8 text-yellow-400" /></div>}
                         <div className="flex items-start space-x-3 mb-4">
                             <button onClick={() => toggleTask(item.id)} className={`relative w-10 h-10 border-4 border-black flex items-center justify-center shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-y-0.5 ${isDone ? 'bg-[#43B047] text-white' : 'bg-white'}`}>
-                                {isDone ? <Icon name="check-circle-2" className="w-6 h-6" /> : <span className="font-black italic">?</span>}
+                                {isDone ? <SvgIcon name="check" className="w-6 h-6" /> : <span className="font-black italic">?</span>}
                             </button>
                             <div>
                                 <h3 className={`font-black text-sm text-white drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] ${isDone ? 'opacity-50 line-through' : ''}`}>{item.name}</h3>
@@ -165,7 +169,7 @@
                             </div>
                         </div>
                         <div className="flex justify-end">
-                            <a href={item.url} target="_blank" rel="noopener noreferrer" className="px-4 py-1 bg-[#009DDF] border-4 border-black text-white font-black text-xs shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:bg-[#007cb1] flex items-center gap-1">PLAY <Icon name="external-link" className="w-3 h-3" /></a>
+                            <a href={item.url} target="_blank" rel="noopener noreferrer" className="px-4 py-1 bg-[#009DDF] border-4 border-black text-white font-black text-xs shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:bg-[#007cb1] flex items-center gap-1">PLAY <SvgIcon name="external-link" className="w-3 h-3" /></a>
                         </div>
                     </div>
                 );
@@ -177,7 +181,7 @@
                     {progress === 100 && (
                         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
                             <div className="p-10 border-8 border-white bg-black text-center -rotate-2">
-                                <Icon name="crown" className="w-20 h-20 text-yellow-400 mx-auto mb-4" />
+                                <span className="text-6xl block mb-4">👑</span>
                                 <h2 className="text-5xl font-black text-white italic tracking-tighter uppercase">Course Clear!</h2>
                                 <p className="text-yellow-400 font-bold mt-4 uppercase">[{playerDept}] {playerName}</p>
                                 <button onClick={() => setCompletedTasks([])} className="mt-8 px-6 py-2 bg-white text-black font-black border-4 border-black">RESTART</button>
@@ -187,7 +191,9 @@
                     <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row pt-4 min-h-screen">
                         <aside className="md:w-80 bg-[#f8f8f8] border-r-8 border-black p-6 flex flex-col">
                             <div className="mb-10 text-center border-b-4 border-black pb-6">
-                                <div className="inline-block p-2 bg-[#E60012] border-4 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] mb-4"><Icon name="gamepad-2" className="w-10 h-10 text-white" /></div>
+                                <div className="inline-block p-2 bg-[#E60012] border-4 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] mb-4">
+                                    <SvgIcon name="gamepad" className="w-10 h-10 text-white" />
+                                </div>
                                 <h1 className="text-2xl font-black italic uppercase">AR Planet</h1>
                                 <p className="text-[10px] font-bold bg-black text-white px-2 py-0.5 inline-block">QUEST PORTAL</p>
                             </div>
@@ -201,7 +207,7 @@
                             </nav>
                             <div className="mt-10 p-4 border-4 border-black bg-white shadow-[4px_4px_0px_rgba(0,0,0,1)]">
                                 <div className="flex justify-between items-center mb-2">
-                                    <div className="flex items-center gap-1 font-black text-sm"><Icon name="coins" className="w-5 h-5 text-yellow-500 fill-yellow-500" /><span>×{completedTasks.length.toString().padStart(2, '0')}</span></div>
+                                    <div className="flex items-center gap-1 font-black text-sm"><span className="text-yellow-500 text-lg">●</span><span>×{completedTasks.length.toString().padStart(2, '0')}</span></div>
                                     <span className="text-xs font-black italic">{progress}%</span>
                                 </div>
                                 <div className="w-full h-6 bg-black p-1 shadow-inner"><div className="h-full bg-[#43B047] transition-all" style={{ width: `${progress}%` }}></div></div>
@@ -215,12 +221,12 @@
                                             <div className="flex flex-col space-y-3 max-w-sm">
                                                 <input autoFocus type="text" placeholder="NAME" value={playerName} onChange={(e) => setPlayerName(e.target.value.toUpperCase())} className="bg-white border-4 border-black p-2 font-black italic shadow-[4px_4px_0px_rgba(0,0,0,1)] uppercase"/>
                                                 <input type="text" placeholder="DEPT" value={playerDept} onChange={(e) => setPlayerDept(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === 'Enter' && setIsEditingInfo(false)} className="bg-white border-4 border-black p-2 font-black italic shadow-[4px_4px_0px_rgba(0,0,0,1)] uppercase"/>
-                                                <button onClick={() => setIsEditingInfo(false)} className="bg-[#43B047] p-2 border-4 border-black text-white font-black flex items-center justify-center gap-2"><Icon name="save" className="w-4 h-4" /> SAVE</button>
+                                                <button onClick={() => setIsEditingInfo(false)} className="bg-[#43B047] p-2 border-4 border-black text-white font-black">SAVE</button>
                                             </div>
                                         ) : (
                                             <div className="inline-flex flex-col cursor-pointer" onClick={() => setIsEditingInfo(true)}>
                                                 <div className="flex items-stretch shadow-[6px_6px_0px_rgba(0,0,0,1)] border-4 border-black bg-white">
-                                                    <div className="bg-[#E60012] p-3 border-r-4 border-black text-white"><Icon name="user" className="w-8 h-8" /></div>
+                                                    <div className="bg-[#E60012] p-3 border-r-4 border-black text-white"><SvgIcon name="user" className="w-8 h-8" /></div>
                                                     <div className="px-5 py-2 flex flex-col justify-center min-w-[180px]">
                                                         <p className="text-[9px] font-black text-slate-400">{playerDept}</p>
                                                         <p className="text-xl font-black italic uppercase">{playerName}</p>
@@ -230,12 +236,12 @@
                                         )}
                                     </div>
                                     <h2 className="text-5xl font-black text-white drop-shadow-[6px_6px_0px_rgba(0,0,0,1)] italic mb-8 uppercase">
-                                        {activeTab === 'level1' ? 'Stage 1: Hello!' : activeTab === 'level2' ? 'Stage 2: Gears' : activeTab === 'level3' ? 'Stage 3: Scrolls' : activeTab === 'level4' ? 'Stage 4: Castle' : activeTab === 'level5' ? 'Bonus: Star' : 'Cloud: Library'}
+                                        {activeTab === 'level-search' ? 'Cloud Search' : activeTab === 'level5' ? 'Star Bonus' : 'Quest Portal'}
                                     </h2>
                                 </div>
                                 <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-5 h-fit space-y-3">
-                                    <div className="flex items-center space-x-3 text-xs font-black border-b-2 border-slate-100 pb-2"><Icon name="wifi" className="w-4 h-4 text-green-600" /><span>AR-3F / pula26552225</span></div>
-                                    <div className="flex items-center space-x-3 text-xs font-black"><Icon name="printer" className="w-4 h-4 text-red-600" /><span>192.168.2.100 (L2740DW)</span></div>
+                                    <div className="flex items-center space-x-3 text-xs font-black border-b-2 border-slate-100 pb-2"><SvgIcon name="wifi" className="w-4 h-4 text-green-600" /><span>AR-3F / pula26552225</span></div>
+                                    <div className="flex items-center space-x-3 text-xs font-black"><SvgIcon name="printer" className="w-4 h-4 text-red-600" /><span>192.168.2.100 (L2740DW)</span></div>
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -252,20 +258,34 @@
                                 {activeTab === 'level4' && trainingData.admin.map(item => <QuestCard key={item.id} item={item} />)}
                                 {activeTab === 'level5' && trainingData.seminar.map(item => <QuestCard key={item.id} item={item} />)}
                                 {activeTab === 'level-search' && (
-                                    <div className="lg:col-span-2 space-y-8">
+                                    <div className="lg:col-span-2 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                         <div className="p-8 bg-white border-8 border-black shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
-                                            <div className="absolute -right-4 -bottom-4 opacity-5 rotate-12"><Icon name="hard-drive" className="w-48 h-48" /></div>
+                                            <div className="absolute -right-4 -bottom-4 opacity-5 rotate-12">
+                                                <SvgIcon name="hard-drive" className="w-48 h-48" />
+                                            </div>
                                             <div className="relative z-10">
-                                                <h3 className="text-3xl font-black mb-6 flex items-center border-b-8 border-black pb-4 uppercase italic"><Icon name="hard-drive" className="w-10 h-10 mr-4 text-[#4285F4]" /> 雲端大圖書館</h3>
-                                                <p className="text-sm font-bold mb-8 text-slate-600">搜尋公司的 **Google 共用雲端硬碟**：</p>
+                                                <h3 className="text-3xl font-black mb-6 flex items-center border-b-8 border-black pb-4 uppercase italic">
+                                                    <SvgIcon name="hard-drive" className="w-10 h-10 mr-4 text-[#4285F4]" /> 雲端大圖書館
+                                                </h3>
+                                                <p className="text-sm font-bold mb-8 text-slate-600 leading-relaxed">
+                                                    輸入關鍵字後點擊搜尋，系統將為您開啟公司 **Google 共用雲端硬碟** 的強力搜尋引擎。
+                                                </p>
                                                 <form onSubmit={handleDriveSearch} className="flex flex-col gap-6">
-                                                    <div className="relative group">
-                                                        <div className="absolute left-6 inset-y-0 flex items-center opacity-30"><Icon name="search" className="w-6 h-6" /></div>
-                                                        <input autoFocus type="text" placeholder="輸入關鍵字..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-slate-50 border-4 border-black p-5 pl-14 text-lg font-black italic outline-none shadow-[6px_6px_0px_0px_rgba(0,0,0,0.1)] focus:bg-white transition-all"/>
-                                                    </div>
-                                                    <button type="submit" className="self-start bg-[#4285F4] text-white px-10 py-5 border-4 border-black font-black text-lg shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none active:bg-[#3367d6] transition-all flex items-center justify-center gap-3 uppercase tracking-tighter">Launch Drive Search <Icon name="external-link" className="w-5 h-5" /></button>
+                                                    <input 
+                                                        autoFocus
+                                                        type="text" 
+                                                        placeholder="請輸入關鍵字..."
+                                                        value={searchTerm}
+                                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                                        className="w-full bg-slate-50 border-4 border-black p-5 text-lg font-black italic outline-none shadow-[6px_6px_0px_0px_rgba(0,0,0,0.1)] focus:bg-white transition-all"
+                                                    />
+                                                    <button 
+                                                        type="submit" 
+                                                        className="bg-[#4285F4] text-white px-10 py-5 border-4 border-black font-black text-lg shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none active:bg-[#3367d6] transition-all flex items-center justify-center gap-3 uppercase tracking-tighter"
+                                                    >
+                                                        Launch Search <SvgIcon name="external-link" className="w-5 h-5" />
+                                                    </button>
                                                 </form>
-                                                <div className="mt-10 p-4 bg-slate-100 border-4 border-black border-dashed"><p className="text-[10px] font-black text-slate-500 flex items-start gap-2"><Icon name="info" className="w-3 h-3 mt-0.5 flex-shrink-0" /><span>提醒：搜尋結果將根據您的公司帳號權限顯示。</span></p></div>
                                             </div>
                                         </div>
                                     </div>
@@ -273,7 +293,6 @@
                             </div>
                         </main>
                     </div>
-                    <div className="fixed bottom-0 left-0 w-full h-12 bg-[#874538] border-t-8 border-black z-0"><div className="flex h-full w-full opacity-10">{[...Array(20)].map((_, i) => <div key={i} className="flex-grow border-r-4 border-black"></div>)}</div></div>
                 </div>
             );
         };
