@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Planet 專案訓練門戶</title>
+    <title>AR Planet Metaverse - Pula Portal</title>
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 React & ReactDOM -->
@@ -18,39 +18,82 @@
           50% { transform: translateY(-80px) scale(1.5); opacity: 1; } 
           100% { transform: translateY(-120px) scale(1); opacity: 0; } 
         }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        
         .animate-bounceX { animation: bounceX 0.6s infinite; }
-        body { background-color: #5C94FC; margin: 0; padding: 0; font-family: monospace; }
-        .pixel-shadow { box-shadow: 4px 4px 0px 0px rgba(0,0,0,1); }
-        .pixel-shadow-sm { box-shadow: 2px 2px 0px 0px rgba(0,0,0,1); }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        
+        body { 
+            background-color: #5C94FC; 
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Courier New', Courier, monospace; 
+        }
+        
+        .meta-card {
+            border: 4px solid black;
+            box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
+            transition: all 0.2s;
+        }
+        
+        .meta-card:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 10px 10px 0px 0px rgba(0,255,255,0.5), 10px 10px 0px 0px rgba(0,0,0,1);
+        }
+
+        .chat-scrollbar::-webkit-scrollbar { width: 6px; }
+        .chat-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .chat-scrollbar::-webkit-scrollbar-thumb { background: #000; }
+        .neon-border { box-shadow: 0 0 15px rgba(0, 255, 255, 0.5); }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
-        // 穩定版 SVG 圖示組件：不依賴外部庫，解決所有載入報錯
+        // 普拉 (Pula) SVG 吉祥物
+        const PulaGraphic = ({ className = "w-10 h-10" }) => (
+            <svg viewBox="0 0 100 100" className={className} xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="45" fill="#3ABEF9" stroke="black" strokeWidth="4" />
+                <circle cx="35" cy="40" r="8" fill="white" stroke="black" strokeWidth="2" />
+                <circle cx="50" cy="35" r="8" fill="white" stroke="black" strokeWidth="2" />
+                <circle cx="65" cy="40" r="8" fill="white" stroke="black" strokeWidth="2" />
+                <circle cx="35" cy="42" r="3" fill="black" />
+                <circle cx="50" cy="37" r="3" fill="black" />
+                <circle cx="65" cy="42" r="3" fill="black" />
+                <path d="M35 70 Q50 85 65 70" stroke="black" strokeWidth="4" fill="white" />
+                <path d="M48 70 L52 70 L50 78 Z" fill="white" stroke="black" strokeWidth="1" />
+                <path d="M10 50 Q0 40 5 60" stroke="black" strokeWidth="4" fill="none" />
+                <path d="M90 50 Q100 40 95 60" stroke="black" strokeWidth="4" fill="none" />
+            </svg>
+        );
+
+        // 語法修正後的穩定版圖示
         const Icon = ({ name, className = "w-6 h-6" }) => {
             const icons = {
-                'gamepad': <path d="M6 12h4M8 10v4M15 13h.01M18 11h.01M2 6h20v12H2z" />,
-                'trophy': <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-2.34c3.37-.3 6-3.1 6-6.66H4c0 3.56 2.63 6.36 6 6.66z" />,
                 'star': <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />,
-                'coins': <><circle cx="8" cy="8" r="6"/><path d="M18 8c0 4.42-3 8-8 8"/><circle cx="18" cy="16" r="6"/></>,
-                'map': <path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3V6zm6-3v15m6-15v15" />,
                 'sword': <path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l2 2 3-3-2-2m-3 3l-4-4m11 0l3 3-4-4" />,
-                'tv': <><rect x="2" y="7" width="20" height="15" rx="2"/><path d="m17 2-5 5-5-5"/></>,
+                'tv': <React.Fragment><rect x="2" y="7" width="20" height="15" rx="2" ry="2" /><path d="m17 2-5 5-5-5" /></React.Fragment>,
+                'map': <path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3V6zm6-3v15m6-15v15" />,
+                'trophy': <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-2.34c3.37-.3 6-3.1 6-6.66H4c0 3.56 2.63 6.36 6 6.66z" />,
+                'gamepad': <React.Fragment><rect x="2" y="6" width="20" height="12" rx="2" /><line x1="6" y1="12" x2="10" y2="12" /><line x1="8" y1="10" x2="8" y2="14" /><circle cx="15" cy="13" r="1" /><circle cx="18" cy="11" r="1" /></React.Fragment>,
+                'hard-drive': <React.Fragment><rect x="2" y="14" width="20" height="8" rx="2" /><path d="M2 14L4.5 4h15L22 14" /></React.Fragment>,
                 'external-link': <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" />,
-                'check-circle': <><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></>,
-                'wifi': <><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></>,
-                'printer': <><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></>,
-                'info': <><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></>,
+                'check': <polyline points="20 6 9 17 4 12" />,
                 'chevron-right': <polyline points="9 18 15 12 9 6" />,
-                'user': <><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,
-                'hard-drive': <><line x1="16" y1="18" x2="16.01" y2="18"/><line x1="12" y1="18" x2="12.01" y2="18"/><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M2 14L4.5 4h15L22 14"/></>,
-                'search': <><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,
-                'crown': <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7z" />,
-                'save': <><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>
+                'coins': <React.Fragment><circle cx="8" cy="8" r="6" /><path d="M18 8c0 4.42-3 8-8 8" /><circle cx="18" cy="16" r="6" /></React.Fragment>,
+                'user': <React.Fragment><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></React.Fragment>,
+                'wifi': <React.Fragment><path d="M5 12.55a11 11 0 0 1 14.08 0" /><path d="M1.42 9a16 16 0 0 1 21.16 0" /></React.Fragment>,
+                'printer': <React.Fragment><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /></React.Fragment>,
+                'bot': <React.Fragment><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 16h.01M16 16h.01"/></React.Fragment>,
+                'send': <path d="m22 2-7 20-4-9-9-4Z M22 2 11 13" />,
+                'x': <path d="M18 6 6 18M6 6l12 12" />
             };
             return (
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -63,24 +106,24 @@
             const [activeTab, setActiveTab] = useState('level1');
             const [playerName, setPlayerName] = useState('PLAYER 1');
             const [playerDept, setPlayerDept] = useState('UNKNOWN DEPT');
-            const [isEditingInfo, setIsEditingInfo] = useState(false);
             const [completedTasks, setCompletedTasks] = useState([]);
             const [progress, setProgress] = useState(0);
             const [animatingCoin, setAnimatingCoin] = useState(null);
             const [searchTerm, setSearchTerm] = useState('');
+            const [isChatOpen, setIsChatOpen] = useState(false);
+            const [chatMessages, setChatMessages] = useState([{ role: 'model', content: '你好！我是宇萌元宇宙助手普拉。關於公司與產品的問題都可以問我喔！' }]);
+            const [userInput, setUserInput] = useState('');
+            const [isAiLoading, setIsAiLoading] = useState(false);
+            const chatEndRef = useRef(null);
 
-            // 初始化與讀取 LocalStorage
-            useEffect(() => {
-                const savedName = localStorage.getItem('arplanet_player_name');
-                const savedDept = localStorage.getItem('arplanet_player_dept');
-                const savedTasks = localStorage.getItem('arplanet_completed_tasks');
-                if (savedName) setPlayerName(savedName);
-                if (savedDept) setPlayerDept(savedDept);
-                if (savedTasks) {
-                    try { setCompletedTasks(JSON.parse(savedTasks)); } catch (e) { setCompletedTasks([]); }
-                }
-            }, []);
+            // YouTube 縮圖解析
+            const getYouTubeThumbnail = (url) => {
+                const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+                const match = url.match(regExp);
+                return match && match[2].length === 11 ? `https://img.youtube.com/vi/${match[2]}/mqdefault.jpg` : null;
+            };
 
+            // 原始完整資料恢復
             const trainingData = {
                 social: [
                     { id: 's1', name: '官網精選案例', url: 'https://www.arplanet.com.tw/', type: 'Web', memo: '了解公司官網案例' },
@@ -89,231 +132,230 @@
                     { id: 's4', name: '下一秒製造所 IG', url: 'https://www.instagram.com/arplanet.tw/', type: 'Social', memo: '請加入追蹤' },
                     { id: 's5', name: 'Mew_IG (mew_reality)', url: 'https://www.instagram.com/mew_mew_xr/', type: 'Social', memo: '請加入追蹤' },
                     { id: 's6', name: '普拉_IG (xr_pula_daily)', url: 'https://www.instagram.com/xr_pula_daily/', type: 'Social', memo: '請加入追蹤' },
-                    { id: 's7', name: 'Podcast (下一秒製造所)', url: 'https://podcasts.apple.com/tw/podcast/id1616439770', type: 'Audio', memo: '請加入追蹤' },
+                    { id: 's7', name: 'Podcast (下一秒製造所)', url: 'https://podcasts.apple.com/tw/podcast/id1616439770', type: 'Audio', memo: '請加入追蹤' }
                 ],
                 winkiss: [
                     { id: 'w1', name: '1-1【winkiss】產品介紹簡報', url: 'https://docs.google.com/presentation/d/1KBeDulhzx6rJR-VmOA7E2OtreP6dCQul/edit', type: 'PPT', memo: 'PPT共34頁' },
                     { id: 'w2', name: '2-1【winkiss】產品介紹影片', url: 'https://youtu.be/gtaod70-6rM', type: 'Video', memo: '影片21分鐘' },
                     { id: 'w3', name: 'winkiss 後台教學影片', url: 'https://youtu.be/qDITk1-dIUM', type: 'Video', memo: '後台操作必看' },
                     { id: 'w4', name: '【winkiss】案例網址', url: 'https://docs.google.com/spreadsheets/d/1flxW11ISTswFLZ6luGbRsMnNGOIO-BhpeRnobKJkdy/edit', type: 'Sheet', memo: '體驗實際客戶案例' },
+                    { id: 'w5', name: '3-1 【winkiss】素材規格', url: 'https://docs.google.com/presentation/d/1KBeDulhzx6rJR-VmOA7E2OtreP6dCQul/edit', type: 'PPT', memo: 'PPT共14頁' }
                 ],
                 marq: [
                     { id: 'm1', name: '認識 marq+', url: 'https://drive.google.com/drive/folders/1F1Z5eCBnM-Xn2R8q4-kNllmsqy20VR2c', type: 'PPT', memo: 'PPT共61頁' },
                     { id: 'm2', name: 'marq+ 後台解說影片', url: 'https://youtu.be/8On2YvcZV60', type: 'Video', memo: '影片33分鐘' },
-                    { id: 'm3', name: 'marq+ 後台上架練習', url: 'http://mg.plus.marq.com.tw/', type: 'Practice', memo: '帳號請向 Sophy 申請' },
+                    { id: 'm3', name: 'marq+ 後台上架練習', url: 'http://mg.plus.marq.com.tw/', type: 'Practice', memo: '帳號向 Sophy 申請' },
+                    { id: 'm4', name: 'marq+ 素材規格 (0830)', url: 'https://docs.google.com/presentation/d/1cgwjml_kberYXGB9P13WnAiTH4zeYm2/edit', type: 'PPT', memo: 'PPT共48頁' },
+                    { id: 'm5', name: 'marq+ 內訓課程 (AR設計技巧)', url: 'https://drive.google.com/file/d/1tVPMjkx1m60tic2F51073-F8M19Bex9/view', type: 'PPT', memo: 'PPT共41頁' },
+                    { id: 'm6', name: '組合模組課程 (實際編輯)', url: 'https://youtu.be/181PtvOGR_O', type: 'Video', memo: '影片26分鐘' }
                 ],
                 xr_knowledge: [
                     { id: 'x1', name: 'XR 基礎概論', url: 'https://docs.google.com/presentation/d/10ZHNwKBMwFfvRd-Nyolz9C-NEe6Eo18k/edit', type: 'PPT', memo: 'PPT共63頁' },
                     { id: 'x2', name: 'AR 擴增實境創意案例', url: 'https://docs.google.com/presentation/d/1jOTWDAadgB3Bbr8oDue-Isy4BJUPi6S44zzWvIhXciA/edit', type: 'PPT', memo: 'PPT共61頁' },
+                    { id: 'x3', name: 'VR 體感學習簡報', url: 'https://docs.google.com/presentation/d/110zTOF70xm9oQKCxwiHZw_rxzP1IzEtO/edit', type: 'PPT', memo: 'PPT共56頁' },
+                    { id: 'x4', name: '閱讀《AR擴增實境創新思維》', url: 'https://www.books.com.tw/products/0010863008', type: 'Book', memo: '向管理部索取書本' }
                 ],
                 admin: [
                     { id: 'a1', name: '人事出勤系統 (打卡)', url: 'https://hrm.mavohr.com/tube', type: 'Tool', memo: '用於打卡、請假' },
                     { id: 'a2', name: '同事介紹/座位表', url: 'https://docs.google.com/spreadsheets/d/1tMFIG21Pa0Wwel7e4bdYnmOxrZyFmVkmu7vr5iXsWs/edit', type: 'Link', memo: '認識公司部門' },
+                    { id: 'a3', name: '會議室租用系統', url: 'http://bmr.isi999.com.tw/', type: 'Link', memo: 'ID: 29151337 / PW: arplanet' },
+                    { id: 'a4', name: '提案技巧範本', url: 'https://docs.google.com/spreadsheets/d/1F0wObkb_UVluk3zTk4pXh3bA4A6jVICMzyOhCjH3Ng0/edit', type: 'Link', memo: '提案範本' },
+                    { id: 'a5', name: '設計部專案時間表', url: 'https://docs.google.com/spreadsheets/d/1YyudKr1RWwz2HPtPfIXox11-rd5p52TW6R6aC0aAHBI/edit', type: 'Form', memo: '美術需求填寫' }
                 ],
                 seminar: [
                     { id: 'v1', name: '2021 XR 行銷技法', url: 'https://www.youtube.com/watch?v=2Rn9fu1WSD8', type: 'Seminar', speaker: '分享會', memo: '了解 XR 行銷' },
-                    { id: 'v2', name: 'AI 工作術營運中心', url: 'https://youtu.be/r2cCgLyFODE', type: 'Seminar', speaker: 'Coco', memo: 'AI 工具應用' },
+                    { id: 'v2', name: 'WebAR 應用與技術解析', url: 'https://youtu.be/cPTurF6GFF4', type: 'Seminar', speaker: '莉婷', memo: 'WebAR 解析' },
+                    { id: 'v3', name: 'AI 工作術營運中心', url: 'https://youtu.be/r2cCgLyFODE', type: 'Seminar', speaker: 'Coco', memo: 'AI 工具應用' },
+                    { id: 'v4', name: 'LLM 原理 ChatGPT', url: 'https://youtu.be/tKoxqZP4xAw', type: 'Seminar', speaker: '科普', memo: 'LLM 原理' },
+                    { id: 'v5', name: 'Stable Diffusion Workshop', url: 'https://youtu.be/HlifvsjcZLk', type: 'Seminar', speaker: 'Haoming', memo: 'AI 繪圖' }
                 ]
             };
 
-            // 當資料變動時存檔
+            const callGemini = async (query) => {
+                const apiKey = ""; // 執行環境帶入
+                const systemPrompt = "你是宇萌數位科技(ARPlanet)助手普拉。宇萌成立於2010年，創始人白璧珍(Sophy)。產品有marq+與winkiss。請以專業元宇宙精靈語氣回答。";
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: query }] }], systemInstruction: { parts: [{ text: systemPrompt }] } })
+                    });
+                    const result = await response.json();
+                    return result.candidates?.[0]?.content?.parts?.[0]?.text || "連線異常，請再試一次。";
+                } catch (e) { return "系統繁忙，請稍後。"; }
+            };
+
+            const handleSendMessage = async (e) => {
+                e.preventDefault();
+                if (!userInput.trim() || isAiLoading) return;
+                const msg = userInput;
+                setUserInput('');
+                setChatMessages(prev => [...prev, { role: 'user', content: msg }]);
+                setIsAiLoading(true);
+                const res = await callGemini(msg);
+                setChatMessages(prev => [...prev, { role: 'model', content: res }]);
+                setIsAiLoading(false);
+            };
+
+            useEffect(() => {
+                const savedName = localStorage.getItem('arplanet_player_name');
+                const savedDept = localStorage.getItem('arplanet_player_dept');
+                const savedTasks = localStorage.getItem('arplanet_completed_tasks');
+                if (savedName) setPlayerName(savedName);
+                if (savedDept) setPlayerDept(savedDept);
+                if (savedTasks) { try { setCompletedTasks(JSON.parse(savedTasks)); } catch (e) {} }
+            }, []);
+
             useEffect(() => {
                 localStorage.setItem('arplanet_player_name', playerName);
                 localStorage.setItem('arplanet_player_dept', playerDept);
                 localStorage.setItem('arplanet_completed_tasks', JSON.stringify(completedTasks));
-                const allTaskIds = Object.values(trainingData).flat().map(item => item.id);
-                setProgress(Math.round((completedTasks.length / allTaskIds.length) * 100));
+                const allIds = Object.values(trainingData).flat().map(i => i.id);
+                setProgress(allIds.length > 0 ? Math.round((completedTasks.length / allIds.length) * 100) : 0);
             }, [playerName, playerDept, completedTasks]);
 
-            const handleDriveSearch = (e) => {
-                if (e) e.preventDefault();
-                if (!searchTerm) return;
-                window.open(`https://drive.google.com/drive/search?q=${encodeURIComponent(searchTerm)}`, '_blank');
-            };
-
             const toggleTask = (id) => {
-                const isAdding = !completedTasks.includes(id);
-                if (isAdding) {
-                    setAnimatingCoin(id);
-                    setTimeout(() => setAnimatingCoin(null), 800);
-                }
+                if (!completedTasks.includes(id)) { setAnimatingCoin(id); setTimeout(() => setAnimatingCoin(null), 800); }
                 setCompletedTasks(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]);
             };
 
             const LevelButton = ({ id, icon, label, sub }) => (
-                <button onClick={() => { setActiveTab(id); setSearchTerm(''); }} className={`w-full relative transition-all duration-150 active:translate-y-1 mb-4 ${activeTab === id ? 'scale-105' : ''}`}>
-                    <div className={`p-4 border-4 border-black pixel-shadow flex items-center space-x-4 ${activeTab === id ? 'bg-[#FFD700] text-black' : 'bg-white text-black hover:bg-slate-100'}`}>
-                        <div className={`w-12 h-12 flex items-center justify-center border-4 border-black ${activeTab === id ? 'bg-white' : 'bg-[#E60012] text-white'}`}>
-                            <Icon name={icon} />
-                        </div>
-                        <div className="text-left">
-                            <p className="text-[10px] font-bold uppercase opacity-60 leading-none">{sub}</p>
-                            <p className="text-sm font-black tracking-tighter">{label}</p>
-                        </div>
-                        {activeTab === id && <div className="absolute -right-2 top-1/2 -translate-y-1/2"><Icon name="chevron-right" className="w-6 h-6 animate-bounceX" /></div>}
+                <button onClick={() => setActiveTab(id)} className={`w-full relative transition-all active:translate-y-1 mb-4 ${activeTab === id ? 'scale-105' : ''}`}>
+                    <div className={`p-4 border-4 border-black shadow-[4px_4px_0px_black] flex items-center space-x-4 ${activeTab === id ? 'bg-[#FFD700] text-black' : 'bg-white text-black hover:bg-slate-100'}`}>
+                        <div className={`w-12 h-12 flex items-center justify-center border-4 border-black ${activeTab === id ? 'bg-white' : 'bg-[#E60012] text-white'}`}><Icon name={icon} /></div>
+                        <div className="text-left"><p className="text-[10px] font-bold uppercase opacity-60 leading-none">{sub}</p><p className="text-sm font-black tracking-tighter">{label}</p></div>
                     </div>
                 </button>
             );
 
             const QuestCard = ({ item }) => {
                 const isDone = completedTasks.includes(item.id);
-                const isAnimating = animatingCoin === item.id;
+                const ytThumb = getYouTubeThumbnail(item.url);
+                const placeholder = "https://placehold.jp/24/000000/ffffff/320x180.png?text=DATA+QUEST";
+
                 return (
-                    <div className={`relative border-4 border-black pixel-shadow p-5 flex flex-col justify-between transition-all ${isDone ? 'bg-[#929088]' : 'bg-[#F27F20]'}`}>
-                        {isAnimating && <div className="absolute left-6 top-0 z-50 animate-[coinPop_0.8s_ease-out_forwards]"><Icon name="coins" className="w-8 h-8 text-yellow-400 fill-yellow-400" /></div>}
-                        <div className="flex items-start space-x-3 mb-4">
-                            <button onClick={() => toggleTask(item.id)} className={`relative w-10 h-10 border-4 border-black flex items-center justify-center pixel-shadow-sm active:translate-y-0.5 ${isDone ? 'bg-[#43B047] text-white' : 'bg-white'}`}>
-                                {isDone ? <Icon name="check-circle" className="w-6 h-6" /> : <span className="font-black italic">?</span>}
-                            </button>
-                            <div>
-                                <h3 className={`font-black text-sm text-white drop-shadow-[2px_2px_0px_rgba(0,0,0,1)] ${isDone ? 'opacity-50 line-through' : ''}`}>{item.name}</h3>
-                                <span className="text-[9px] bg-black text-white px-1.5 py-0.5 font-bold mt-1 inline-block">{item.type || item.speaker}</span>
-                            </div>
+                    <div className={`meta-card relative overflow-hidden flex flex-col ${isDone ? 'bg-gray-400' : 'bg-white'}`}>
+                        <div className="aspect-video w-full bg-black border-b-4 border-black relative">
+                            <img src={ytThumb || placeholder} className="w-full h-full object-cover" />
+                            {isDone && <div className="absolute inset-0 bg-green-500/40 flex items-center justify-center font-black text-3xl text-white italic drop-shadow-md">CLEARED</div>}
                         </div>
-                        <div className="flex justify-end">
-                            <a href={item.url} target="_blank" rel="noopener noreferrer" className="px-4 py-1 bg-[#009DDF] border-4 border-black text-white font-black text-xs pixel-shadow-sm hover:translate-y-0.5 hover:shadow-none transition-all flex items-center gap-1">PLAY <Icon name="external-link" className="w-3 h-3" /></a>
+                        <div className="p-4 flex flex-col justify-between flex-grow">
+                            <div className="flex items-start gap-3 mb-4">
+                                <button onClick={() => toggleTask(item.id)} className={`w-12 h-12 border-4 border-black flex items-center justify-center shrink-0 active:scale-95 ${isDone ? 'bg-[#43B047]' : 'bg-yellow-400'}`}>
+                                    {isDone ? <Icon name="check" className="text-white" /> : <PulaGraphic className="w-8 h-8" />}
+                                </button>
+                                <div><h3 className={`font-black text-sm leading-tight ${isDone ? 'line-through opacity-50' : ''}`}>{item.name}</h3><p className="text-[10px] font-bold text-slate-500 mt-1">{item.memo}</p></div>
+                            </div>
+                            <div className="flex justify-end"><a href={item.url} target="_blank" className="bg-[#009DDF] border-4 border-black text-white px-3 py-1.5 font-black text-[10px] shadow-[2px_2px_0px_black] active:shadow-none translate-y-0 active:translate-y-0.5">GO MISSION <Icon name="external-link" className="w-3 h-3 inline" /></a></div>
                         </div>
                     </div>
                 );
             };
 
             return (
-                <div className="min-h-screen bg-[#5C94FC] font-mono p-4 md:p-0 overflow-x-hidden pb-12">
+                <div className="min-h-screen p-4 md:p-0 overflow-x-hidden pb-24">
                     <div className="h-4 bg-black w-full fixed top-0 left-0 z-50"></div>
                     
                     {progress === 100 && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in zoom-in duration-300">
-                            <div className="p-10 border-8 border-white bg-black text-center -rotate-2">
-                                <Icon name="crown" className="w-20 h-20 text-yellow-400 mx-auto mb-4 animate-bounce" />
-                                <h2 className="text-5xl font-black text-white italic tracking-tighter uppercase">Course Clear!</h2>
-                                <p className="text-yellow-400 font-bold mt-4 uppercase tracking-widest">[{playerDept}] {playerName}</p>
-                                <button onClick={() => setCompletedTasks([])} className="mt-8 px-6 py-2 bg-white text-black font-black border-4 border-black pixel-shadow hover:bg-yellow-400">RESTART ADVENTURE</button>
+                        <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center backdrop-blur-md">
+                            <div className="p-10 border-8 border-white bg-black text-center -rotate-1">
+                                <PulaGraphic className="w-32 h-32 mx-auto mb-4 animate-float" />
+                                <h2 className="text-5xl font-black text-white italic">QUEST CLEAR!</h2>
+                                <button onClick={() => setCompletedTasks([])} className="mt-8 px-10 py-4 bg-yellow-400 font-black border-4 border-black">REBOOT PORTAL</button>
                             </div>
                         </div>
                     )}
 
                     <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row pt-4 min-h-screen">
-                        <aside className="md:w-80 bg-[#f8f8f8] border-r-8 border-black p-6 flex flex-col z-10">
-                            <div className="mb-10 text-center border-b-4 border-black pb-6">
-                                <div className="inline-block p-2 bg-[#E60012] border-4 border-black pixel-shadow mb-4">
-                                    <Icon name="gamepad" className="w-10 h-10 text-white" />
-                                </div>
-                                <h1 className="text-2xl font-black italic uppercase tracking-tighter">AR Planet</h1>
-                                <p className="text-[10px] font-bold bg-black text-white px-2 py-0.5 inline-block">QUEST PORTAL</p>
+                        <aside className="md:w-80 bg-white/95 border-r-8 border-black p-6 flex flex-col relative z-10">
+                            <div className="mb-8 text-center border-b-4 border-black pb-6">
+                                <div className="inline-block p-4 bg-black border-4 border-cyan-400 shadow-[0_0_15px_cyan] mb-4 animate-float"><PulaGraphic className="w-12 h-12" /></div>
+                                <h1 className="text-2xl font-black italic tracking-tighter">AR PLANET</h1>
+                                <p className="text-[10px] font-bold bg-cyan-400 px-2 py-0.5 border-2 border-black inline-block mt-2">METAVERSE v2.0</p>
                             </div>
-
-                            <nav className="flex-grow">
+                            <nav className="flex-grow space-y-1">
                                 <LevelButton id="level1" icon="star" label="WORLD 1-1" sub="新人見面禮" />
-                                <LevelButton id="level2" icon="sword" label="WORLD 1-2" sub="核心產品戰" />
-                                <LevelButton id="level3" icon="tv" label="WORLD 1-3" sub="XR 冒險筆記" />
-                                <LevelButton id="level4" icon="map" label="WORLD 1-4" sub="行政管理區" />
-                                <LevelButton id="level5" icon="trophy" label="BONUS" sub="名人分享堂" />
-                                <div className="mt-4 pt-4 border-t-4 border-black/10">
-                                    <LevelButton id="level-search" icon="hard-drive" label="WORLD 2-1" sub="雲端大圖書館" />
-                                </div>
+                                <LevelButton id="level2" icon="sword" label="WORLD 1-2" sub="WINKISS 核心" />
+                                <LevelButton id="level3" icon="tv" label="WORLD 1-3" sub="marq+ 冒險" />
+                                <LevelButton id="level4" icon="map" label="WORLD 1-4" sub="行政大地圖" />
+                                <LevelButton id="level5" icon="trophy" label="BONUS" sub="分享堂" />
+                                <div className="mt-4 pt-4 border-t-4 border-black/10"><LevelButton id="level-search" icon="hard-drive" label="LIBRARY" sub="雲端大圖書館" /></div>
                             </nav>
-
-                            <div className="mt-10 p-4 border-4 border-black bg-white pixel-shadow">
-                                <div className="flex justify-between items-center mb-2 font-black text-xs">
-                                    <div className="flex items-center gap-1">🪙 ×{completedTasks.length.toString().padStart(2, '0')}</div>
-                                    <div className="italic">{progress}%</div>
-                                </div>
-                                <div className="w-full h-6 bg-black p-1 shadow-inner">
-                                    <div className="h-full bg-[#43B047] transition-all duration-500" style={{ width: `${progress}%` }}></div>
-                                </div>
+                            <div className="mt-6 p-4 border-4 border-black bg-black text-white shadow-[0_0_10px_cyan]">
+                                <div className="flex justify-between font-black text-[10px] mb-1"><span className="text-cyan-400">EXP: {completedTasks.length} ITEMS</span><span className="text-yellow-400">{progress}%</span></div>
+                                <div className="w-full h-4 bg-slate-800 p-0.5"><div className="h-full bg-cyan-400 shadow-[0_0_10px_cyan] transition-all duration-700" style={{ width: `${progress}%` }}></div></div>
                             </div>
                         </aside>
 
-                        <main className="flex-grow p-6 md:p-12 relative">
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12 relative z-10">
-                                <div className="lg:col-span-2">
-                                    <div className="mb-6">
-                                        {isEditingInfo ? (
-                                            <div className="flex flex-col space-y-3 max-w-sm">
-                                                <input autoFocus type="text" placeholder="NAME" value={playerName} onChange={(e) => setPlayerName(e.target.value.toUpperCase())} className="bg-white border-4 border-black p-2 font-black italic shadow-none outline-none uppercase"/>
-                                                <input type="text" placeholder="DEPT" value={playerDept} onChange={(e) => setPlayerDept(e.target.value.toUpperCase())} onKeyDown={(e) => e.key === 'Enter' && setIsEditingInfo(false)} className="bg-white border-4 border-black p-2 font-black italic shadow-none outline-none uppercase"/>
-                                                <button onClick={() => setIsEditingInfo(false)} className="bg-[#43B047] p-2 border-4 border-black text-white font-black pixel-shadow flex items-center justify-center gap-2"><Icon name="save" className="w-4 h-4" /> SAVE STATS</button>
-                                            </div>
-                                        ) : (
-                                            <div className="inline-flex flex-col cursor-pointer" onClick={() => setIsEditingInfo(true)}>
-                                                <div className="flex items-stretch border-4 border-black pixel-shadow bg-white hover:bg-yellow-50 transition-colors">
-                                                    <div className="bg-[#E60012] p-3 border-r-4 border-black text-white"><Icon name="user" className="w-8 h-8" /></div>
-                                                    <div className="px-5 py-2 flex flex-col justify-center min-w-[200px]">
-                                                        <p className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">{playerDept}</p>
-                                                        <p className="text-xl font-black italic uppercase leading-none">{playerName}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
+                        <main className="flex-grow p-6 md:p-12 relative z-0">
+                            <div className="mb-12 flex flex-col md:flex-row justify-between items-start gap-6">
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2 p-2 bg-yellow-400 border-4 border-black shadow-[4px_4px_0px_black] w-fit">
+                                        <Icon name="user" className="w-4 h-4"/><span className="font-black italic text-xs uppercase">{playerName} | {playerDept}</span>
                                     </div>
-                                    <h2 className="text-5xl font-black text-white drop-shadow-[6px_6px_0px_rgba(0,0,0,1)] italic mb-8 uppercase tracking-tighter">
-                                        {activeTab === 'level1' ? 'Stage 1: Hello!' : 
-                                         activeTab === 'level2' ? 'Stage 2: Gears' : 
-                                         activeTab === 'level3' ? 'Stage 3: Scrolls' : 
-                                         activeTab === 'level4' ? 'Stage 4: Castle' : 
-                                         activeTab === 'level5' ? 'Bonus: Star' : 'Cloud: Search'}
+                                    <h2 className="text-6xl font-black text-white drop-shadow-[8px_8px_0px_black] italic uppercase tracking-tighter">
+                                        {activeTab === 'level-search' ? 'SEARCH MODE' : 'MISSION PORTAL'}
                                     </h2>
                                 </div>
-                                <div className="bg-white border-4 border-black pixel-shadow p-5 h-fit space-y-3">
-                                    <div className="flex items-center space-x-3 text-xs font-black border-b-2 border-slate-100 pb-2">
-                                        <Icon name="wifi" className="w-4 h-4 text-green-600" /> <span>AR-3F / pula26552225</span>
-                                    </div>
-                                    <div className="flex items-center space-x-3 text-xs font-black">
-                                        <Icon name="printer" className="w-4 h-4 text-red-600" /> <span>192.168.2.100 (L2740DW)</span>
-                                    </div>
+                                <div className="bg-black p-4 border-4 border-cyan-400 shadow-[0_0_15px_rgba(0,255,255,0.4)] text-[10px] font-black text-white space-y-1">
+                                    <div className="flex items-center gap-2 text-cyan-400"><Icon name="wifi" className="w-4 h-4" /> AR-3F ONLINE</div>
+                                    <div className="flex items-center gap-2 text-red-400"><Icon name="printer" className="w-4 h-4" /> L2740DW CONNECTED</div>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-10">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                                 {activeTab === 'level1' && trainingData.social.map(item => <QuestCard key={item.id} item={item} />)}
-                                {activeTab === 'level2' && (
-                                    <>
-                                        <div className="lg:col-span-2 font-black text-white bg-black px-4 py-1 inline-block skew-x-[-10deg]">WINKISS 系列</div>
-                                        {trainingData.winkiss.map(item => <QuestCard key={item.id} item={item} />)}
-                                        <div className="lg:col-span-2 font-black text-white bg-black px-4 py-1 inline-block skew-x-[-10deg] mt-8">MARQ+ 系列</div>
-                                        {trainingData.marq.map(item => <QuestCard key={item.id} item={item} />)}
-                                    </>
-                                )}
-                                {activeTab === 'level3' && trainingData.xr_knowledge.map(item => <QuestCard key={item.id} item={item} />)}
+                                {activeTab === 'level2' && trainingData.winkiss.map(item => <QuestCard key={item.id} item={item} />)}
+                                {activeTab === 'level3' && trainingData.marq.map(item => <QuestCard key={item.id} item={item} />)}
                                 {activeTab === 'level4' && trainingData.admin.map(item => <QuestCard key={item.id} item={item} />)}
                                 {activeTab === 'level5' && trainingData.seminar.map(item => <QuestCard key={item.id} item={item} />)}
-                                
                                 {activeTab === 'level-search' && (
-                                    <div className="lg:col-span-2 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                        <div className="p-8 bg-white border-8 border-black pixel-shadow relative overflow-hidden">
-                                            <div className="absolute -right-4 -bottom-4 opacity-5 rotate-12">
-                                                <Icon name="hard-drive" className="w-48 h-48" />
-                                            </div>
-                                            <div className="relative z-10">
-                                                <h3 className="text-3xl font-black mb-6 flex items-center border-b-8 border-black pb-4 uppercase italic">
-                                                    <Icon name="hard-drive" className="w-10 h-10 mr-4 text-[#4285F4]" /> 雲端大圖書館
-                                                </h3>
-                                                <p className="text-sm font-bold mb-8 text-slate-600 leading-relaxed">
-                                                    輸入關鍵字後點擊搜尋，系統將為您開啟公司 **Google 共用雲端硬碟** 的強力搜尋引擎。
-                                                </p>
-                                                <form onSubmit={handleDriveSearch} className="flex flex-col gap-6">
-                                                    <div className="relative group">
-                                                        <div className="absolute left-6 inset-y-0 flex items-center opacity-30 group-focus-within:opacity-100 transition-opacity">
-                                                            <Icon name="search" className="w-6 h-6" />
-                                                        </div>
-                                                        <input autoFocus type="text" placeholder="請輸入專案名稱或關鍵字..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-slate-50 border-4 border-black p-5 pl-14 text-lg font-black italic outline-none focus:bg-white transition-all"/>
-                                                    </div>
-                                                    <button type="submit" className="self-start bg-[#4285F4] text-white px-10 py-5 border-4 border-black font-black text-lg pixel-shadow hover:translate-y-1 hover:shadow-none active:bg-[#3367d6] transition-all flex items-center justify-center gap-3 uppercase tracking-tighter">Launch Drive Search <Icon name="external-link" className="w-5 h-5" /></button>
-                                                </form>
-                                                <div className="mt-10 p-4 bg-slate-100 border-4 border-black border-dashed">
-                                                    <p className="text-[10px] font-black text-slate-500 flex items-start gap-2">
-                                                        <Icon name="info" className="w-3 h-3 mt-0.5" />
-                                                        <span>提醒：搜尋結果將根據您的公司帳號權限顯示。</span>
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <div className="lg:col-span-2 bg-white border-8 border-black p-10 shadow-[12px_12px_0px_black] relative">
+                                        <div className="absolute right-0 bottom-0 opacity-10 rotate-12"><PulaGraphic className="w-64 h-64" /></div>
+                                        <h3 className="text-3xl font-black mb-4 flex items-center gap-4 border-b-8 border-black pb-2 italic text-blue-600"><Icon name="hard-drive" className="w-10 h-10"/> DIGITAL SCANNER</h3>
+                                        <p className="font-bold text-slate-600 mb-8">在此搜尋宇萌元宇宙中的所有共享資料與內部文件：</p>
+                                        <form onSubmit={(e) => {e.preventDefault(); window.open(`https://drive.google.com/drive/search?q=${encodeURIComponent(searchTerm)}`, '_blank')}} className="flex flex-col gap-4 relative z-10">
+                                            <input autoFocus type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="輸入關鍵字..." className="border-8 border-black p-5 text-2xl font-black italic outline-none focus:bg-cyan-50"/>
+                                            <button type="submit" className="bg-[#4285F4] text-white p-6 border-8 border-black font-black text-2xl shadow-[8px_8px_0px_black] active:shadow-none translate-y-0 active:translate-y-1">SCAN DRIVE DATABASE <Icon name="external-link" className="inline w-6 h-6 ml-2"/></button>
+                                        </form>
                                     </div>
                                 )}
                             </div>
                         </main>
                     </div>
-                    <div className="fixed bottom-0 left-0 w-full h-12 bg-[#874538] border-t-8 border-black z-0"><div className="flex h-full w-full opacity-10">{[...Array(20)].map((_, i) => <div key={i} className="flex-grow border-r-4 border-black"></div>)}</div></div>
+
+                    {/* AI 對話框 */}
+                    <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end">
+                        {isChatOpen && (
+                            <div className="mb-4 w-80 md:w-96 h-[480px] bg-white border-8 border-black shadow-[10px_10px_0px_black] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
+                                <div className="bg-black p-4 flex justify-between items-center text-white font-black italic">
+                                    <div className="flex items-center gap-2"><Icon name="bot" className="w-5 h-5 text-cyan-400" /> PULA ASSISTANT</div>
+                                    <button onClick={() => setIsChatOpen(false)}><Icon name="x" className="w-5 h-5" /></button>
+                                </div>
+                                <div className="flex-grow p-4 overflow-y-auto space-y-4 chat-scrollbar bg-slate-50">
+                                    {chatMessages.map((m, i) => (
+                                        <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                            <div className={`max-w-[85%] p-3 border-4 border-black font-bold text-xs ${m.role === 'user' ? 'bg-[#FFD700] shadow-[2px_2px_0px_black]' : 'bg-white'}`}>{m.content}</div>
+                                        </div>
+                                    ))}
+                                    {isAiLoading && <div className="bg-white p-2 border-4 border-black w-fit animate-pulse text-[10px] font-black italic">Pula is thinking...</div>}
+                                    <div ref={chatEndRef} />
+                                </div>
+                                <form onSubmit={handleSendMessage} className="p-4 bg-white border-t-8 border-black flex gap-2">
+                                    <input type="text" value={userInput} onChange={(e) => setUserInput(e.target.value)} placeholder="詢問關於宇萌的問題..." className="flex-grow border-4 border-black p-2 text-xs font-black outline-none focus:bg-yellow-50"/>
+                                    <button type="submit" disabled={isAiLoading} className="bg-[#E60012] text-white p-2 border-4 border-black shadow-[2px_2px_0px_black]"><Icon name="send" className="w-4 h-4" /></button>
+                                </form>
+                            </div>
+                        )}
+                        <button onClick={() => setIsChatOpen(!isChatOpen)} className="p-4 border-8 border-black shadow-[6px_6px_0px_black] bg-[#E60012] text-white hover:scale-110 active:scale-95 transition-all">
+                            {isChatOpen ? <Icon name="x" className="w-8 h-8" /> : <Icon name="bot" className="w-8 h-8" />}
+                        </button>
+                    </div>
+
+                    <div className="fixed bottom-0 left-0 w-full h-8 bg-[#874538] border-t-8 border-black z-0 flex justify-around opacity-20">
+                        {[...Array(8)].map((_, i) => <PulaGraphic key={i} className="w-6 h-6 grayscale" />)}
+                    </div>
                 </div>
             );
         };
