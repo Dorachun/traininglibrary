@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Planet Metaverse - Pula Portal</title>
+    <title>AR Planet - Mission Portal</title>
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 React & ReactDOM -->
@@ -13,64 +13,89 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         @keyframes bounceX { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(8px); } }
-        @keyframes coinPop { 
-          0% { transform: translateY(0) scale(0.5); opacity: 0; } 
-          50% { transform: translateY(-80px) scale(1.5); opacity: 1; } 
-          100% { transform: translateY(-120px) scale(1); opacity: 0; } 
-        }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         @keyframes neonPulse { 0%, 100% { border-color: #00fbff; box-shadow: 0 0 5px #00fbff; } 50% { border-color: #0088ff; box-shadow: 0 0 15px #0088ff; } }
-        
-        .animate-bounceX { animation: bounceX 0.6s infinite; }
-        .animate-float { animation: float 3s ease-in-out infinite; }
-        .neon-glow { animation: neonPulse 2s infinite ease-in-out; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes typing { from { width: 0 } to { width: 100% } }
         
         body { 
             background-color: #050a18; 
-            background-image: 
-                radial-gradient(circle at 50% 50%, #1a1f3c 0%, #050a18 100%),
-                linear-gradient(rgba(0, 251, 255, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 251, 255, 0.05) 1px, transparent 1px);
-            background-size: 100% 100%, 40px 40px, 40px 40px;
             margin: 0; 
             padding: 0; 
-            font-family: 'Courier New', Courier, monospace; 
+            font-family: system-ui, -apple-system, sans-serif;
             color: #ffffff;
-        }
-        
-        .meta-card {
-            background-color: #0d1127;
-            border: 2px solid #00fbff;
-            box-shadow: 0 0 10px rgba(0, 251, 255, 0.2);
-            transition: all 0.3s;
-        }
-        
-        .meta-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 0 20px rgba(0, 251, 255, 0.5);
-            border-color: #ffffff;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 50%, #1a1f3c 0%, #050a18 100%);
         }
 
-        .chat-scrollbar::-webkit-scrollbar { width: 6px; }
-        .chat-scrollbar::-webkit-scrollbar-track { background: #0d1127; }
-        .chat-scrollbar::-webkit-scrollbar-thumb { background: #00fbff; }
-        
-        .engage-btn {
-            background-color: #00ff00;
-            color: #000;
-            font-weight: 900;
-            border: none;
-            transition: all 0.2s;
-        }
-        .engage-btn:hover {
-            background-color: #ffffff;
-            box-shadow: 0 0 15px #00ff00;
-        }
-        
-        .sidebar-item-active {
+        .sidebar-active {
             background-color: #00fbff !important;
             color: #000 !important;
-            box-shadow: 0 0 15px #00fbff;
+            box-shadow: 0 0 20px #00fbff;
+        }
+
+        .sidebar-item {
+            background-color: #111833;
+            border: 1px solid rgba(0, 251, 255, 0.1);
+            transition: all 0.2s;
+        }
+
+        .mission-card {
+            background-color: #0c122b;
+            border: 1px solid #00fbff;
+            transition: all 0.2s;
+        }
+        
+        .mission-card:hover {
+            border-color: #ffffff;
+            box-shadow: 0 0 15px rgba(0, 251, 255, 0.3);
+        }
+
+        .engage-btn {
+            background-color: #00ff00;
+            color: #000000;
+            font-weight: 900;
+            font-size: 9px;
+            padding: 4px 12px;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            cursor: pointer;
+            border-radius: 2px;
+            white-space: nowrap;
+            display: inline-block;
+        }
+
+        .engage-btn:hover {
+            background-color: #ffffff;
+            box-shadow: 0 0 12px #00ff00;
+        }
+
+        .portal-title {
+            font-style: italic;
+            font-weight: 900;
+            letter-spacing: -1px;
+            text-shadow: 0 0 10px #00fbff;
+        }
+
+        .chat-scrollbar::-webkit-scrollbar { width: 4px; }
+        .chat-scrollbar::-webkit-scrollbar-thumb { background: #00fbff; }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        
+        .tutorial-overlay {
+            background-color: rgba(5, 10, 24, 0.98);
+            backdrop-filter: blur(15px);
+        }
+        
+        .typing-text {
+            overflow: hidden;
+            border-right: 2px solid #00fbff;
+            white-space: nowrap;
+            letter-spacing: 0.15em;
+            animation: typing 1s steps(20, end);
+        }
+
+        select option {
+            background-color: #0d1127;
+            color: #00fbff;
         }
     </style>
 </head>
@@ -80,7 +105,6 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // 普拉 (Pula) SVG 吉祥物 - 保持不變
         const PulaGraphic = ({ className = "w-10 h-10" }) => (
             <svg viewBox="0 0 100 100" className={className} xmlns="http://www.w3.org/2000/svg">
                 <circle cx="50" cy="50" r="45" fill="#3ABEF9" stroke="black" strokeWidth="4" />
@@ -97,28 +121,29 @@
             </svg>
         );
 
-        // 語法修正後的穩定版圖示 - 保持不變
-        const Icon = ({ name, className = "w-6 h-6" }) => {
+        const Icon = ({ name, className = "w-4 h-4" }) => {
             const icons = {
+                'rocket-color': <span className="text-2xl">🚀</span>,
+                'box-color': <span className="text-2xl">📦</span>,
+                'map-color': <span className="text-2xl">🌌</span>,
+                'doc-color': <span className="text-2xl">📄</span>,
+                'film-color': <span className="text-2xl">🎬</span>,
+                'search-color': <span className="text-2xl">🔍</span>,
+                'rocket': <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09zM12 15l-3-3m8.5-4.5L12 12m5.5-4.5L21 3m-4.5 4.5l-3-3m0 0C11.3 2.3 8.2 2 6.5 3.5s-1.2 4.8.7 7l1.3 1.3 5.5-5.5-1.3-1.3z" />,
+                'search': <React.Fragment><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></React.Fragment>,
                 'star': <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />,
-                'sword': <path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l2 2 3-3-2-2m-3 3l-4-4m11 0l3 3-4-4" />,
-                'tv': <React.Fragment><rect x="2" y="7" width="20" height="15" rx="2" ry="2" /><path d="m17 2-5 5-5-5" /></React.Fragment>,
-                'map': <path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3V6zm6-3v15m6-15v15" />,
-                'trophy': <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-2.34c3.37-.3 6-3.1 6-6.66H4c0 3.56 2.63 6.36 6 6.66z" />,
-                'gamepad': <React.Fragment><rect x="2" y="6" width="20" height="12" rx="2" /><line x1="6" y1="12" x2="10" y2="12" /><line x1="8" y1="10" x2="8" y2="14" /><circle cx="15" cy="13" r="1" /><circle cx="18" cy="11" r="1" /></React.Fragment>,
-                'hard-drive': <React.Fragment><rect x="2" y="14" width="20" height="8" rx="2" /><path d="M2 14L4.5 4h15L22 14" /></React.Fragment>,
-                'external-link': <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" />,
                 'check': <polyline points="20 6 9 17 4 12" />,
-                'chevron-right': <polyline points="9 18 15 12 9 6" />,
-                'coins': <React.Fragment><circle cx="8" cy="8" r="6" /><path d="M18 8c0 4.42-3 8-8 8" /><circle cx="18" cy="16" r="6" /></React.Fragment>,
-                'user': <React.Fragment><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></React.Fragment>,
-                'wifi': <React.Fragment><path d="M5 12.55a11 11 0 0 1 14.08 0" /><path d="M1.42 9a16 16 0 0 1 21.16 0" /></React.Fragment>,
-                'printer': <React.Fragment><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /></React.Fragment>,
-                'bot': <React.Fragment><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 16h.01M16 16h.01"/></React.Fragment>,
-                'send': <path d="m22 2-7 20-4-9-9-4Z M22 2 11 13" />,
-                'x': <path d="M18 6 6 18M6 6l12 12" />,
-                'rocket': <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09zM12 15l-3-3m8.5-4.5L12 12m5.5-4.5L21 3m-4.5 4.5l-3-3m0 0C11.3 2.3 8.2 2 6.5 3.5s-1.2 4.8.7 7l1.3 1.3 5.5-5.5-1.3-1.3z" />
+                'wifi': <React.Fragment><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><line x1="12" y1="20" x2="12.01" y2="20" /></React.Fragment>,
+                'bot': <React.Fragment><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></React.Fragment>,
+                'x': <React.Fragment><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></React.Fragment>,
+                'settings': <React.Fragment><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></React.Fragment>,
+                'info': <><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></>,
+                'hard-drive': <React.Fragment><rect x="2" y="14" width="20" height="8" rx="2" /><path d="M2 14L4.5 4h15L22 14" /></React.Fragment>,
+                'user': <><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>
             };
+
+            if (name.includes('-color')) return icons[name];
+
             return (
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
                     {icons[name] || <circle cx="12" cy="12" r="10" />}
@@ -128,153 +153,198 @@
 
         const App = () => {
             const [activeTab, setActiveTab] = useState('level1');
-            const [playerName, setPlayerName] = useState('PLAYER 1');
-            const [playerDept, setPlayerDept] = useState('UNKNOWN DEPT');
+            const [playerName, setPlayerName] = useState('');
+            const [playerDept, setPlayerDept] = useState('');
             const [completedTasks, setCompletedTasks] = useState([]);
             const [progress, setProgress] = useState(0);
-            const [animatingCoin, setAnimatingCoin] = useState(null);
             const [searchTerm, setSearchTerm] = useState('');
+            
+            const [onboardingStep, setOnboardingStep] = useState(0); 
+            const [isInitialLoading, setIsInitialLoading] = useState(true);
+
             const [isChatOpen, setIsChatOpen] = useState(false);
-            const [chatMessages, setChatMessages] = useState([{ role: 'model', content: '你好！我是宇萌元宇宙助手普拉。關於公司與產品的問題都可以問我喔！' }]);
+            const [chatMessages, setChatMessages] = useState([{ role: 'model', content: '你好！我是 Pula。已經為您更新了雲端圖書館的中文說明囉！' }]);
             const [userInput, setUserInput] = useState('');
             const [isAiLoading, setIsAiLoading] = useState(false);
+            const [isSettingKey, setIsSettingKey] = useState(false);
+            const [tempKey, setTempKey] = useState(localStorage.getItem('arplanet_ai_key') || "");
             const chatEndRef = useRef(null);
 
-            // YouTube 縮圖解析
-            const getYouTubeThumbnail = (url) => {
-                const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-                const match = url.match(regExp);
-                return match && match[2].length === 11 ? `https://img.youtube.com/vi/${match[2]}/mqdefault.jpg` : null;
-            };
-
-            // 原始完整資料恢復 - 保持不變
             const trainingData = {
                 social: [
-                    { id: 's1', name: '官網精選案例', url: 'https://www.arplanet.com.tw/', type: 'Web', memo: '認識公司官網案例' },
-                    { id: 's2', name: '公司 Youtube 頻道', url: 'https://www.youtube.com/user/arplanet2', type: 'Video', memo: '追蹤與訂閱' },
-                    { id: 's3', name: 'FB (下一秒製造所)', url: 'https://www.facebook.com/arplanet1/', type: 'Social', memo: '按讚掌握動態' },
-                    { id: 's4', name: 'IG (下一秒製造所)', url: 'https://www.instagram.com/arplanet.tw/', type: 'Social', memo: '追蹤視覺視覺' },
-                    { id: 's5', name: 'Mew_IG', url: 'https://www.instagram.com/mew_mew_xr/', type: 'Social', memo: 'Metaverse Life' },
-                    { id: 's6', name: '普拉_IG', url: 'https://www.instagram.com/xr_pula_daily/', type: 'Social', memo: 'Pula Daily' },
-                    { id: 's7', name: 'Thread (下一秒製造所)', url: 'https://www.threads.net/@arplanet.tw', type: 'Social', memo: '按讚掌握動態' }
+                    { id: 's1', name: '官網精選案例', url: 'https://www.arplanet.com.tw/', type: 'WEB', memo: '認識公司官網案例' },
+                    { id: 's2', name: '公司 Youtube 頻道', url: 'https://www.youtube.com/user/arplanet2', type: 'VIDEO', memo: '追蹤與訂閱' },
+                    { id: 's3', name: 'FB (下一秒製造所)', url: 'https://www.facebook.com/arplanet1/', type: 'SOCIAL', memo: '按讚掌握動態' },
+                    { id: 's4', name: 'IG (下一秒製造所)', url: 'https://www.instagram.com/arplanet.tw/', type: 'SOCIAL', memo: '追蹤視覺饗宴' },
+                    { id: 's5', name: 'Mew_IG', url: 'https://www.instagram.com/mew_mew_xr/', type: 'SOCIAL', memo: 'Metaverse Life' },
+                    { id: 's6', name: '普拉_IG', url: 'https://www.instagram.com/xr_pula_daily/', type: 'SOCIAL', memo: 'Pula Daily' },
+                    { id: 's7', name: 'Thread (下一秒製造所)', url: 'https://www.threads.net/@arplanet.tw', type: 'SOCIAL', memo: '按讚掌握動態' },
+                    { id: 's8', name: 'Podcast (下一秒製造所)', url: 'https://podcasts.apple.com/tw/podcast/%E4%B8%8B%E4%B8%80%E7%A7%92%E8%A3%BD%E9%80%A0%E6%89%80/id1616439770', type: 'AUDIO', memo: '請加入追蹤' }
                 ],
                 winkiss: [
                     { id: 'w1', name: '1-1【winkiss】產品介紹簡報', url: 'https://docs.google.com/presentation/d/1KBeDulhzx6rJR-VmOA7E2OtreP6dCQul/edit', type: 'PPT', memo: 'PPT共34頁' },
-                    { id: 'w2', name: '2-1【winkiss】產品介紹影片', url: 'https://youtu.be/gtaod70-6rM', type: 'Video', memo: '影片21分鐘' },
-                    { id: 'w3', name: 'winkiss 後台教學影片', url: 'https://youtu.be/qDITk1-dIUM', type: 'Video', memo: '後台操作必看' },
-                    { id: 'w4', name: '【winkiss】案例網址', url: 'https://docs.google.com/spreadsheets/d/1flxW11ISTswFLZ6luGbRsMnNGOIO-BhpeRnobKJkdy/edit', type: 'Sheet', memo: '體驗實際客戶案例' },
+                    { id: 'w2', name: '2-1【winkiss】產品介紹影片', url: 'https://youtu.be/gtaod70-6rM', type: 'VIDEO', memo: '影片21分鐘' },
+                    { id: 'w3', name: 'winkiss 後台教學影片', url: 'https://youtu.be/qDITk1-dIUM', type: 'VIDEO', memo: '後台操作必看' },
+                    { id: 'w4', name: '【winkiss】案例網址', url: 'https://docs.google.com/spreadsheets/d/1flxW11ISTswFLZ6luGbRsMnNGOIO-BhpeRnobKJkdy/edit', type: 'SHEET', memo: '體驗實際客戶案例' },
                     { id: 'w5', name: '3-1 【winkiss】素材規格', url: 'https://docs.google.com/presentation/d/1KBeDulhzx6rJR-VmOA7E2OtreP6dCQul/edit', type: 'PPT', memo: 'PPT共14頁' }
                 ],
                 marq: [
                     { id: 'm1', name: '認識 marq+', url: 'https://drive.google.com/drive/folders/1F1Z5eCBnM-Xn2R8q4-kNllmsqy20VR2c', type: 'PPT', memo: 'PPT共61頁' },
-                    { id: 'm2', name: 'marq+ 後台解說影片', url: 'https://youtu.be/8On2YvcZV60', type: 'Video', memo: '影片33分鐘' },
-                    { id: 'm3', name: 'marq+ 後台上架練習', url: 'http://mg.plus.marq.com.tw/', type: 'Practice', memo: '帳號向 Sophy 申請' },
-                    { id: 'm4', name: 'marq+ 素材規格 (0830)', url: 'https://docs.google.com/presentation/d/1cgwjml_kberYXGB9P13WnAiTH4zeYm2/edit', type: 'PPT', memo: 'PPT共48頁' },
-                    { id: 'm5', name: 'marq+ 內訓課程 (AR設計技巧)', url: 'https://drive.google.com/file/d/1tVPMjkx1m60tic2F51073-F8M19Bex9/view', type: 'PPT', memo: 'PPT共41頁' },
-                    { id: 'm6', name: '組合模組課程 (實際編輯)', url: 'https://youtu.be/181PtvOGR_O', type: 'Video', memo: '影片26分鐘' }
+                    { id: 'm2', name: 'marq+ 後台解說影片', url: 'https://youtu.be/8On2YvcZV60', type: 'VIDEO', memo: '影片33分鐘' },
+                    { id: 'm3', name: 'marq+ 後台上架練習', url: 'http://mg.plus.marq.com.tw/', type: 'PRACTICE', memo: '帳號向 Sophy 申請' },
+                    { id: 'm4', name: 'marq+ 素材規格', url: 'https://docs.google.com/presentation/d/1cgwjml_kberYXGB9P13WnAiTH4zeYm2/edit', type: 'PPT', memo: 'PPT共48頁' },
+                    { id: 'm5', name: 'marq+ 內訓課程', url: 'https://drive.google.com/file/d/1tVPMjkx1m60tic2F51073-F8M19Bex9/view', type: 'PPT', memo: 'AR設計技巧' },
+                    { id: 'm6', name: '組合模組課程', url: 'https://youtu.be/181PtvOGR_O', type: 'VIDEO', memo: '實際編輯示範' }
                 ],
-                xr_knowledge: [
+                xr: [
                     { id: 'x1', name: 'XR 基礎概論', url: 'https://docs.google.com/presentation/d/10ZHNwKBMwFfvRd-Nyolz9C-NEe6Eo18k/edit', type: 'PPT', memo: 'PPT共63頁' },
                     { id: 'x2', name: 'AR 擴增實境創意案例', url: 'https://docs.google.com/presentation/d/1jOTWDAadgB3Bbr8oDue-Isy4BJUPi6S44zzWvIhXciA/edit', type: 'PPT', memo: 'PPT共61頁' },
                     { id: 'x3', name: 'VR 體感學習簡報', url: 'https://docs.google.com/presentation/d/110zTOF70xm9oQKCxwiHZw_rxzP1IzEtO/edit', type: 'PPT', memo: 'PPT共56頁' },
-                    { id: 'x4', name: '閱讀《AR擴增實境創新思維》', url: 'https://www.books.com.tw/products/0010863008', type: 'Book', memo: '向管理部索取書本' }
+                    { id: 'x4', name: '閱讀《AR擴增實境創新思維》', url: 'https://www.books.com.tw/products/0010863008', type: 'BOOK', memo: '向管理部索取' }
                 ],
                 admin: [
-                    { id: 'a1', name: '人事出勤系統 (打卡)', url: 'https://hrm.mavohr.com/tube', type: 'Tool', memo: '用於打卡、請假' },
-                    { id: 'a2', name: '同事介紹/座位表', url: 'https://docs.google.com/spreadsheets/d/1tMFIG21Pa0Wwel7e4bdYnmOxrZyFmVkmu7vr5iXsWs/edit', type: 'Link', memo: '認識公司部門' },
-                    { id: 'a3', name: '會議室租用系統', url: 'http://bmr.isi999.com.tw/', type: 'Link', memo: 'ID: 29151337 / PW: arplanet' },
-                    { id: 'a4', name: '提案技巧範本', url: 'https://docs.google.com/spreadsheets/d/1F0wObkb_UVluk3zTk4pXh3bA4A6jVICMzyOhCjH3Ng0/edit', type: 'Link', memo: '提案範本' },
-                    { id: 'a5', name: '設計部專案時間表', url: 'https://docs.google.com/spreadsheets/d/1YyudKr1RWwz2HPtPfIXox11-rd5p52TW6R6aC0aAHBI/edit', type: 'Form', memo: '美術需求填寫' }
+                    { id: 'a1', name: '人事出勤系統 (打卡)', url: 'https://hrm.mavohr.com/tube', type: 'TOOL', memo: '用於打卡、請假' },
+                    { id: 'a2', name: '同事介紹/座位表', url: 'https://docs.google.com/spreadsheets/d/1tMFIG21Pa0Wwel7e4bdYnmOxrZyFmVkmu7vr5iXsWs/edit', type: 'LINK', memo: '認識公司部門' },
+                    { id: 'a3', name: '會議室租用系統', url: 'http://bmr.isi999.com.tw/', type: 'LINK', memo: 'ID: 29151337 / PW: arplanet' },
+                    { id: 'a4', name: '提案技巧範本', url: 'https://docs.google.com/spreadsheets/d/1F0wObkb_UVluk3zTk4pXh3bA4A6jVICMzyOhCjH3Ng0/edit', type: 'LINK', memo: '提案範本' },
+                    { id: 'a5', name: '設計部專案時間表', url: 'https://docs.google.com/spreadsheets/d/1YyudKr1RWwz2HPtPfIXox11-rd5p52TW6R6aC0aAHBI/edit', type: 'FORM', memo: '美術需求填寫' }
                 ],
-                seminar: [
-                    { id: 'v1', name: '2021 XR 行銷技法', url: 'https://www.youtube.com/watch?v=2Rn9fu1WSD8', type: 'Seminar', speaker: '分享會', memo: '了解 XR 行銷' },
-                    { id: 'v2', name: 'WebAR 應用與技術解析', url: 'https://youtu.be/cPTurF6GFF4', type: 'Seminar', speaker: '莉婷', memo: 'WebAR 解析' },
-                    { id: 'v3', name: 'AI 工作術營運中心', url: 'https://youtu.be/r2cCgLyFODE', type: 'Seminar', speaker: 'Coco', memo: 'AI 工具應用' },
-                    { id: 'v4', name: 'LLM 原理 ChatGPT', url: 'https://youtu.be/tKoxqZP4xAw', type: 'Seminar', speaker: '科普', memo: 'LLM 原理' },
-                    { id: 'v5', name: 'Stable Diffusion Workshop', url: 'https://youtu.be/HlifvsjcZLk', type: 'Seminar', speaker: 'Haoming', memo: 'AI 繪圖' }
+                bonus: [
+                    { id: 'v1', name: '2021 XR 行銷技法', url: 'https://www.youtube.com/watch?v=2Rn9fu1WSD8', type: 'SEMINAR', memo: '了解 XR 行銷' },
+                    { id: 'v2', name: 'WebAR 應用與技術解析', url: 'https://youtu.be/cPTurF6GFF4', type: 'SEMINAR', memo: 'WebAR 解析' },
+                    { id: 'v3', name: 'AI 工作術營運中心', url: 'https://youtu.be/r2cCgLyFODE', type: 'SEMINAR', memo: 'AI 工具應用' },
+                    { id: 'v4', name: 'LLM 原理 ChatGPT', url: 'https://youtu.be/tKoxqZP4xAw', type: 'SEMINAR', memo: 'LLM 原理' },
+                    { id: 'v5', name: 'Stable Diffusion Workshop', url: 'https://youtu.be/HlifvsjcZLk', type: 'SEMINAR', memo: 'AI 繪圖' }
                 ]
             };
 
-            const callGemini = async (query) => {
-                const apiKey = ""; // 執行環境帶入
-                const systemPrompt = "你是宇萌數位科技(ARPlanet)助手普拉。宇萌成立於2010年，創始人白璧珍(Sophy)。產品有marq+與winkiss。請以專業元宇宙精靈語氣回答。";
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: query }] }], systemInstruction: { parts: [{ text: systemPrompt }] } })
-                    });
-                    const result = await response.json();
-                    return result.candidates?.[0]?.content?.parts?.[0]?.text || "連線異常，請再試一次。";
-                } catch (e) { return "系統繁忙，請稍後。"; }
-            };
-
-            const handleSendMessage = async (e) => {
-                e.preventDefault();
-                if (!userInput.trim() || isAiLoading) return;
-                const msg = userInput;
-                setUserInput('');
-                setChatMessages(prev => [...prev, { role: 'user', content: msg }]);
-                setIsAiLoading(true);
-                const res = await callGemini(msg);
-                setChatMessages(prev => [...prev, { role: 'model', content: res }]);
-                setIsAiLoading(false);
-            };
-
             useEffect(() => {
-                const savedName = localStorage.getItem('arplanet_player_name');
-                const savedDept = localStorage.getItem('arplanet_player_dept');
-                const savedTasks = localStorage.getItem('arplanet_completed_tasks');
-                if (savedName) setPlayerName(savedName);
-                if (savedDept) setPlayerDept(savedDept);
-                if (savedTasks) { try { setCompletedTasks(JSON.parse(savedTasks)); } catch (e) {} }
+                const n = localStorage.getItem('arplanet_player_name');
+                const d = localStorage.getItem('arplanet_player_dept');
+                const t = localStorage.getItem('arplanet_completed_tasks');
+                
+                setTimeout(() => {
+                    setIsInitialLoading(false);
+                    if (n && d) {
+                        setPlayerName(n);
+                        setPlayerDept(d);
+                        setOnboardingStep(4);
+                    } else {
+                        setOnboardingStep(0);
+                    }
+                }, 1500);
+
+                if (t) setCompletedTasks(JSON.parse(t));
             }, []);
 
             useEffect(() => {
-                localStorage.setItem('arplanet_player_name', playerName);
-                localStorage.setItem('arplanet_player_dept', playerDept);
+                if (onboardingStep === 4) {
+                    localStorage.setItem('arplanet_player_name', playerName);
+                    localStorage.setItem('arplanet_player_dept', playerDept);
+                }
                 localStorage.setItem('arplanet_completed_tasks', JSON.stringify(completedTasks));
-                const allIds = Object.values(trainingData).flat().map(i => i.id);
-                setProgress(allIds.length > 0 ? Math.round((completedTasks.length / allIds.length) * 100) : 0);
-            }, [playerName, playerDept, completedTasks]);
+                const all = Object.values(trainingData).flat();
+                setProgress(all.length ? Math.round((completedTasks.length / all.length) * 100) : 0);
+            }, [completedTasks, playerName, playerDept, onboardingStep]);
 
-            const toggleTask = (id) => {
-                if (!completedTasks.includes(id)) { setAnimatingCoin(id); setTimeout(() => setAnimatingCoin(null), 800); }
-                setCompletedTasks(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]);
+            const handleSend = async (e) => {
+                e.preventDefault();
+                if (!userInput.trim() || isAiLoading) return;
+                const msg = userInput; setUserInput('');
+                setChatMessages(p => [...p, { role: 'user', content: msg }]);
+                setIsAiLoading(true);
+                setTimeout(() => {
+                    setChatMessages(p => [...p, { role: 'model', content: "Pula 收到了！已就緒。" }]);
+                    setIsAiLoading(false);
+                }, 800);
             };
 
             const LevelButton = ({ id, icon, label, sub }) => (
-                <button onClick={() => setActiveTab(id)} className={`w-full relative transition-all active:translate-y-1 mb-2 ${activeTab === id ? 'scale-105' : ''}`}>
-                    <div className={`p-4 border-2 border-[#00fbff]/30 flex items-center space-x-4 rounded-lg transition-all ${activeTab === id ? 'sidebar-item-active' : 'bg-[#0d1127] text-white hover:bg-[#1a1f3c] hover:border-[#00fbff]'}`}>
-                        <div className={`w-10 h-10 flex items-center justify-center rounded transition-all ${activeTab === id ? 'bg-black text-[#00fbff]' : 'bg-[#00fbff]/10 text-[#00fbff]'}`}><Icon name={icon} className="w-5 h-5"/></div>
-                        <div className="text-left"><p className="text-sm font-black tracking-tighter uppercase">{label}</p><p className="text-[9px] font-bold opacity-60 leading-none mt-1">{sub}</p></div>
-                        {activeTab === id && <div className="absolute right-4"><Icon name="chevron-right" className="w-4 h-4 animate-bounceX" /></div>}
+                <button onClick={() => { setActiveTab(id); setSearchTerm(''); }} className={`w-full group mb-3 transition-all ${activeTab === id ? '' : 'hover:translate-x-1'}`}>
+                    <div className={`flex items-center gap-4 p-4 rounded-md sidebar-item ${activeTab === id ? 'sidebar-active' : 'text-slate-400'}`}>
+                        <div className="w-10 h-10 flex items-center justify-center"><Icon name={icon} /></div>
+                        <div className="text-left">
+                            <p className="text-[12px] font-black leading-none uppercase">{label}</p>
+                            <p className="text-[9px] opacity-60 mt-1 uppercase font-bold tracking-tighter">{sub}</p>
+                        </div>
                     </div>
                 </button>
             );
 
-            const QuestCard = ({ item }) => {
+            const Card = ({ item }) => {
                 const isDone = completedTasks.includes(item.id);
-                const ytThumb = getYouTubeThumbnail(item.url);
-                const placeholder = "https://placehold.jp/24/1a1f3c/00fbff/320x180.png?text=ARPLANET+MISSION";
-
                 return (
-                    <div className={`meta-card relative overflow-hidden flex flex-col rounded-lg ${isDone ? 'opacity-60' : ''}`}>
-                        <div className="aspect-video w-full bg-black border-b-2 border-[#00fbff]/30 relative">
-                            <img src={ytThumb || placeholder} className="w-full h-full object-cover opacity-80" />
-                            {isDone && <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center font-black text-2xl text-white italic tracking-widest drop-shadow-lg">MISSION CLEAR</div>}
-                            <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/80 text-[#00fbff] text-[8px] font-bold border border-[#00fbff]/50 rounded">{item.type}</div>
-                        </div>
-                        <div className="p-5 flex flex-col justify-between flex-grow">
-                            <div className="flex items-start gap-4 mb-4">
-                                <button onClick={() => toggleTask(item.id)} className={`w-10 h-10 border-2 flex items-center justify-center shrink-0 rounded transition-all ${isDone ? 'bg-green-500 border-green-400' : 'bg-transparent border-[#00fbff] hover:bg-[#00fbff]/20'}`}>
-                                    {isDone ? <Icon name="check" className="text-black w-6 h-6" /> : <div className="text-[#00fbff] text-xl">★</div>}
-                                </button>
-                                <div><h3 className={`font-black text-sm leading-tight text-white ${isDone ? 'opacity-50' : ''}`}>{item.name}</h3><p className="text-[10px] font-bold text-slate-400 mt-2 flex items-center gap-1"><Icon name="info" className="w-3 h-3"/> {item.memo}</p></div>
+                    <div className={`mission-card p-6 flex flex-col md:flex-row items-center gap-6 relative ${isDone ? 'opacity-40' : ''}`}>
+                        <div className="flex-shrink-0">
+                            <div onClick={() => !isDone ? setCompletedTasks(p => [...p, item.id]) : setCompletedTasks(p => p.filter(id => id !== item.id))} className={`w-10 h-10 border border-[#00fbff]/40 flex items-center justify-center cursor-pointer transition-all ${isDone ? 'text-[#00ff00] border-[#00ff00]' : 'text-slate-500 hover:text-[#00fbff]'}`}>
+                                <Icon name="star" className="w-5 h-5" />
                             </div>
-                            <div className="flex justify-end pt-2">
-                                <a href={item.url} target="_blank" className="engage-btn px-6 py-2 text-[11px] uppercase rounded shadow-[0_0_10px_rgba(0,255,0,0.3)]">ENGAGE LINK</a>
+                        </div>
+                        <div className="flex-grow text-center md:text-left">
+                            <h3 className="font-bold text-sm text-white tracking-tight mb-2 italic uppercase">{item.name}</h3>
+                            <div className="flex items-center justify-center md:justify-start gap-3">
+                                <span className="text-[7px] border border-[#00fbff]/50 px-1.5 py-0.5 text-[#00fbff] font-black">{item.type}</span>
+                                <span className="text-[9px] text-slate-400 font-bold flex items-center gap-1"><Icon name="info" className="w-2.5 h-2.5" /> {item.memo}</span>
+                            </div>
+                        </div>
+                        <div className="mt-4 md:mt-0 ml-auto flex-shrink-0"><a href={item.url} target="_blank" className="engage-btn">ENGAGE LINK</a></div>
+                    </div>
+                );
+            };
+
+            const Onboarding = () => {
+                return (
+                    <div className="fixed inset-0 z-[200] tutorial-overlay flex items-center justify-center p-6">
+                        <div className="max-w-2xl w-full bg-[#0d1127] border-2 border-[#00fbff] shadow-[0_0_30px_rgba(0,251,255,0.4)] p-10 rounded-sm">
+                            <div className="flex flex-col md:flex-row gap-10 items-center">
+                                <div className="animate-float shrink-0"><PulaGraphic className="w-40 h-40" /></div>
+                                <div className="flex-grow space-y-6">
+                                    {onboardingStep === 0 && (
+                                        <div className="space-y-6">
+                                            <div className="portal-title text-3xl text-[#00fbff]">WELCOME TO AR PLANET</div>
+                                            <p className="text-sm font-bold leading-relaxed text-slate-300 italic">歡迎加入宇萌數位科技任務入口！系統正在偵測新 Operator 的生命訊號...</p>
+                                            <button onClick={() => setOnboardingStep(1)} className="engage-btn w-full py-4 text-xl">INITIALIZE IDENTITY</button>
+                                        </div>
+                                    )}
+                                    {onboardingStep === 1 && (
+                                        <div className="space-y-6 animate-in slide-in-from-right duration-300">
+                                            <p className="text-xs font-black text-[#00fbff] uppercase tracking-widest">Identify Yourself:</p>
+                                            <h2 className="text-2xl font-black italic">你的 Operator 代號（姓名）？</h2>
+                                            <input autoFocus type="text" value={playerName} onChange={e => setPlayerName(e.target.value.toUpperCase())} onKeyDown={e => e.key === 'Enter' && playerName && setOnboardingStep(2)} placeholder="ENTER CALLSIGN..." className="w-full bg-black/50 border-2 border-[#00fbff]/50 p-4 text-xl font-black text-[#00fbff] outline-none focus:border-white uppercase" />
+                                            <button disabled={!playerName} onClick={() => setOnboardingStep(2)} className="engage-btn w-full py-3 disabled:grayscale">NEXT PHASE</button>
+                                        </div>
+                                    )}
+                                    {onboardingStep === 2 && (
+                                        <div className="space-y-6 animate-in slide-in-from-right duration-300">
+                                            <p className="text-xs font-black text-[#00fbff] uppercase tracking-widest">Sector Assign:</p>
+                                            <h2 className="text-2xl font-black italic">你的隸屬部門？</h2>
+                                            <div className="relative">
+                                                <select autoFocus value={playerDept} onChange={e => setPlayerDept(e.target.value)} className="w-full bg-black/50 border-2 border-[#00fbff]/50 p-4 text-xl font-black text-[#00fbff] outline-none focus:border-white appearance-none cursor-pointer">
+                                                    <option value="" disabled>SELECT SECTOR...</option>
+                                                    <option value="TECHNICAL">TECHNICAL</option>
+                                                    <option value="CREATIVE">CREATIVE</option>
+                                                    <option value="OPERATIONS">OPERATIONS</option>
+                                                    <option value="MANAGEMENT">MANAGEMENT</option>
+                                                    <option value="XRA">XRA</option>
+                                                </select>
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#00fbff]">▼</div>
+                                            </div>
+                                            <button disabled={!playerDept} onClick={() => setOnboardingStep(3)} className="engage-btn w-full py-3 disabled:grayscale">CONFIRM REGISTRY</button>
+                                        </div>
+                                    )}
+                                    {onboardingStep === 3 && (
+                                        <div className="space-y-6 animate-in slide-in-from-right duration-300">
+                                            <p className="text-xs font-black text-[#00fbff] uppercase tracking-widest">Tutorial Phase:</p>
+                                            <h2 className="text-xl font-black italic">新手指南</h2>
+                                            <ul className="text-[11px] space-y-4 font-bold text-slate-300">
+                                                <li className="flex items-start gap-2"><span className="text-[#00ff00]">●</span> 點擊左側「星星」收集能量星辰。</li>
+                                                <li className="flex items-start gap-2"><span className="text-[#00fbff]">●</span> 使用「雲端圖書館」掃描共享硬碟。</li>
+                                                <li className="flex items-start gap-2"><span className="text-yellow-400">●</span> 點擊右下角「普拉」開啟 AI 對話。</li>
+                                            </ul>
+                                            <button onClick={() => setOnboardingStep(4)} className="engage-btn w-full py-4 text-xl">LOCKED AND LOADED</button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -282,140 +352,136 @@
             };
 
             return (
-                <div className="min-h-screen overflow-x-hidden pb-24">
-                    {/* 頂部裝飾 */}
-                    <div className="h-1 pula-gradient w-full fixed top-0 left-0 z-50"></div>
-                    
-                    {progress === 100 && (
-                        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center backdrop-blur-xl">
-                            <div className="p-12 border-4 border-[#00fbff] bg-[#050a18] text-center rounded-3xl shadow-[0_0_50px_#00fbff]">
-                                <PulaGraphic className="w-32 h-32 mx-auto mb-6 animate-float" />
-                                <h2 className="text-5xl font-black text-[#00fbff] italic mb-4 tracking-widest">SYSTEM OVERLOAD: 100%</h2>
-                                <p className="text-white font-bold text-xl uppercase mb-8 tracking-widest">[{playerDept}] {playerName}</p>
-                                <button onClick={() => setCompletedTasks([])} className="engage-btn px-12 py-4 text-xl rounded-full">RESET CORE POWER</button>
-                            </div>
+                <div className="min-h-screen">
+                    {isInitialLoading && (
+                        <div className="fixed inset-0 z-[300] bg-[#050a18] flex flex-col items-center justify-center space-y-4">
+                            <div className="typing-text text-[#00fbff] font-black italic text-xl uppercase tracking-widest">System_Initializing_v2.0</div>
+                            <div className="w-64 h-1 bg-white/10 relative overflow-hidden rounded-full"><div className="absolute inset-0 bg-[#00fbff] animate-[typing_2s_ease-in-out_infinite]"></div></div>
                         </div>
                     )}
 
-                    <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row pt-8 min-h-screen">
-                        {/* 左側選單 */}
-                        <aside className="md:w-80 px-6 flex flex-col relative z-10 border-r border-[#00fbff]/10">
-                            <div className="mb-12 text-center">
-                                <div className="w-24 h-24 mx-auto mb-4 relative">
-                                    <div className="absolute inset-0 pula-gradient blur-xl opacity-20"></div>
-                                    <PulaGraphic className="w-full h-full relative" />
+                    {onboardingStep < 4 && !isInitialLoading && <Onboarding />}
+
+                    <div className="flex flex-col md:flex-row">
+                        <aside className="w-full md:w-[320px] bg-[#0d1127] border-r border-[#00fbff]/20 flex flex-col p-8 sticky top-0 h-screen z-50">
+                            <div className="text-center mb-10">
+                                <div className="flex items-center justify-center gap-2 text-slate-400 mb-8 cursor-pointer hover:text-white" onClick={() => setOnboardingStep(1)}>
+                                    <div className="w-10 h-10 rounded-full bg-[#00fbff]/10 border border-[#00fbff]/40 flex items-center justify-center relative overflow-hidden"><PulaGraphic className="w-12 h-12 absolute top-1" /></div>
+                                    <span className="text-sm font-black tracking-widest uppercase">Operator: {playerName || '???'}</span>
                                 </div>
-                                <h1 className="text-3xl font-black italic tracking-tighter text-white mb-1">AR PLANET</h1>
-                                <div className="text-[10px] font-bold bg-[#00fbff] text-black px-3 py-0.5 inline-block rounded-full">MISSION PORTAL</div>
+                                <h1 className="portal-title text-4xl text-white mb-1 tracking-tighter">AR PLANET</h1>
+                                <div className="bg-black/40 border border-[#00fbff]/30 px-4 py-0.5 inline-block rounded-sm"><span className="text-[10px] font-black text-[#00fbff] tracking-[3px]">MISSION PORTAL</span></div>
                             </div>
-                            
-                            <nav className="flex-grow space-y-3">
-                                <LevelButton id="level1" icon="rocket" label="認識宇萌" sub="WORLD 1-1" />
-                                <LevelButton id="level2" icon="gamepad" label="產品與素材" sub="WORLD 1-2" />
-                                <LevelButton id="level3" icon="map" label="XR 知識庫" sub="WORLD 1-3" />
-                                <LevelButton id="level4" icon="star" label="行政與表單" sub="WORLD 1-4" />
-                                <LevelButton id="level5" icon="tv" label="精選分享會" sub="BONUS" />
-                                <div className="mt-8 pt-8 border-t border-[#00fbff]/10">
-                                    <LevelButton id="level-search" icon="hard-drive" label="數位掃描儀" sub="DATABASE SCAN" />
-                                </div>
+
+                            <nav className="flex-grow overflow-y-auto chat-scrollbar pr-2">
+                                <LevelButton id="level1" icon="rocket-color" label="認識宇萌" sub="WORLD 1-1" />
+                                <LevelButton id="level2" icon="box-color" label="產品與素材" sub="WORLD 1-2" />
+                                <LevelButton id="level3" icon="map-color" label="XR 知識庫" sub="WORLD 1-3" />
+                                <LevelButton id="level4" icon="doc-color" label="行政與表單" sub="WORLD 1-4" />
+                                <LevelButton id="level5" icon="film-color" label="精選分享會" sub="BONUS" />
+                                <div className="mt-6 border-t border-[#00fbff]/10 pt-6"><LevelButton id="level-search" icon="search-color" label="雲端圖書館" sub="DATABASE SCAN" /></div>
                             </nav>
 
-                            <div className="mt-12 p-6 bg-[#0d1127] border-2 border-[#00fbff]/30 rounded-2xl">
-                                <div className="flex justify-between items-center font-black text-[10px] mb-3">
-                                    <span className="text-[#00fbff]">CORE STABILITY</span>
-                                    <span className="text-[#00ff00]">{progress}%</span>
+                            <div className="mt-auto pt-6">
+                                <div className="flex justify-between items-end mb-2">
+                                    <div className="flex items-center gap-2 text-xs font-black text-yellow-500"><Icon name="star" className="w-3 h-3 fill-yellow-500"/><span>x{completedTasks.length.toString().padStart(2,'0')}</span></div>
+                                    <span className="text-[#00fbff] text-xs font-black">{progress}%</span>
                                 </div>
-                                <div className="w-full h-3 bg-black rounded-full p-0.5 overflow-hidden">
-                                    <div className="h-full bg-[#00ff00] rounded-full transition-all duration-1000 shadow-[0_0_10px_#00ff00]" style={{ width: `${progress}%` }}></div>
-                                </div>
+                                <div className="w-full h-3 bg-black/50 border border-[#00fbff]/20 p-0.5"><div className="h-full bg-[#00ff00] transition-all duration-1000 shadow-[0_0_10px_#00ff00]" style={{ width: `${progress}%` }}></div></div>
+                                <p className="text-[8px] text-center text-[#00fbff] font-black mt-2 tracking-widest opacity-60 uppercase">Core Power Stability</p>
                             </div>
                         </aside>
 
-                        {/* 主內容區 */}
-                        <main className="flex-grow p-6 md:p-12 relative z-0">
-                            <div className="mb-16 flex flex-col md:flex-row justify-between items-end gap-6 border-b border-[#00fbff]/10 pb-8">
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-2 h-2 rounded-full bg-[#00ff00] animate-pulse"></div>
-                                        <span className="font-black text-xs text-slate-400 tracking-widest uppercase">Operator: {playerName} // Dept: {playerDept}</span>
+                        <main className="flex-grow p-10 md:p-14 relative">
+                            <div className="max-w-6xl mx-auto">
+                                <div className="flex flex-col md:flex-row gap-6 mb-16 items-stretch">
+                                    <div className="bg-[#161b33] border border-[#00fbff]/20 p-6 flex items-center gap-6 min-w-[300px]">
+                                        <div className="w-12 h-12 bg-blue-600/10 border border-blue-600/40 flex items-center justify-center relative overflow-hidden"><PulaGraphic className="w-14 h-14 absolute top-1" /></div>
+                                        <div>
+                                            <p className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Technical Status</p>
+                                            <h2 className="text-2xl font-black italic">{playerName || 'UNKNOWN'}</h2>
+                                            <p className="text-[10px] font-bold text-slate-500">{playerDept || 'Sector Pending'}</p>
+                                        </div>
                                     </div>
-                                    <h2 className="text-7xl font-black text-white italic uppercase tracking-tighter drop-shadow-[0_0_15px_rgba(0,251,255,0.3)]">
-                                        {activeTab === 'level-search' ? 'Scanner' : 'Missions'}
-                                    </h2>
-                                </div>
-                                <div className="flex gap-4">
-                                    <div className="bg-[#0d1127] p-3 border border-[#00fbff]/30 rounded flex items-center gap-3">
-                                        <Icon name="wifi" className="w-4 h-4 text-[#00fbff]"/>
-                                        <span className="text-[10px] font-black text-white">AR3F-5G / ar-planet2915</span>
+                                    <div className="flex-grow bg-[#0c122b] border-2 border-[#00fbff] border-l-8 p-6 relative">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 bg-black flex items-center justify-center font-black text-xl text-cyan-400 border border-cyan-400">!</div>
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div><span className="text-[10px] font-black text-cyan-400 tracking-widest uppercase">Incoming Message</span></div>
+                                                <p className="text-sm font-bold italic">點擊左側星星收集能量，完成新人太空任務！</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-12">
-                                {activeTab === 'level1' && trainingData.social.map(item => <QuestCard key={item.id} item={item} />)}
-                                {activeTab === 'level2' && (
-                                    <>
-                                        <div className="lg:col-span-2 flex items-center gap-4">
-                                            <div className="h-0.5 flex-grow bg-[#00fbff]/20"></div>
-                                            <span className="font-black text-[#00fbff] italic tracking-widest">WINKISS SYSTEMS</span>
-                                            <div className="h-0.5 flex-grow bg-[#00fbff]/20"></div>
+                                {activeTab === 'level-search' ? (
+                                    <div className="lg:col-span-2 bg-[#0d1127] border-2 border-[#00fbff] p-12 relative overflow-hidden rounded-sm">
+                                        <div className="absolute right-0 bottom-0 opacity-10 rotate-12 scale-150 pointer-events-none animate-float"><PulaGraphic className="w-64 h-64" /></div>
+                                        <div className="relative z-10">
+                                            <h3 className="text-4xl font-black italic text-[#00fbff] mb-2 uppercase tracking-tighter">Database Scanner</h3>
+                                            <p className="text-[#00fbff] font-bold text-lg mb-8 italic">宇萌數位科技 雲端圖書館</p>
+                                            
+                                            <div className="bg-[#161b33] border border-[#00fbff]/30 p-6 rounded mb-8 space-y-4">
+                                                <p className="text-sm font-bold text-slate-300 leading-relaxed">
+                                                    正在掃描宇萌元宇宙中的所有共享資料與內部文件庫...<br/>
+                                                    <span className="text-[#00fbff]">●</span> 請輸入關鍵字搜尋公司 Google 共用雲端硬碟。<br/>
+                                                    <span className="text-[#00ff00]">●</span> 搜尋結果將於新分頁開啟，請確保已登入公司 Google 帳號。
+                                                </p>
+                                            </div>
+
+                                            <form onSubmit={(e) => { e.preventDefault(); window.open(`https://drive.google.com/drive/search?q=${encodeURIComponent(searchTerm)}`, '_blank'); }} className="flex flex-col gap-6">
+                                                <input autoFocus value={searchTerm} onChange={e => setSearchTerm(e.target.value)} type="text" placeholder="請輸入搜尋關鍵字 (例如：專案名稱、日期)..." className="bg-black/50 border border-[#00fbff]/50 p-5 text-xl font-black text-[#00fbff] outline-none focus:border-white transition-all rounded-sm italic" />
+                                                <button type="submit" className="engage-btn p-5 text-lg uppercase font-black">開始掃描檔案 (Initialize Scan)</button>
+                                            </form>
                                         </div>
-                                        {trainingData.winkiss.map(item => <QuestCard key={item.id} item={item} />)}
-                                        <div className="lg:col-span-2 flex items-center gap-4 mt-8">
-                                            <div className="h-0.5 flex-grow bg-[#00fbff]/20"></div>
-                                            <span className="font-black text-[#00fbff] italic tracking-widest">MARQ+ NETWORKS</span>
-                                            <div className="h-0.5 flex-grow bg-[#00fbff]/20"></div>
-                                        </div>
-                                        {trainingData.marq.map(item => <QuestCard key={item.id} item={item} />)}
-                                    </>
-                                )}
-                                {activeTab === 'level3' && trainingData.xr_knowledge.map(item => <QuestCard key={item.id} item={item} />)}
-                                {activeTab === 'level4' && trainingData.admin.map(item => <QuestCard key={item.id} item={item} />)}
-                                {activeTab === 'level5' && trainingData.seminar.map(item => <QuestCard key={item.id} item={item} />)}
-                                {activeTab === 'level-search' && (
-                                    <div className="lg:col-span-2 bg-[#0d1127] border-2 border-[#00fbff] p-12 rounded-3xl relative overflow-hidden">
-                                        <div className="absolute right-0 bottom-0 opacity-10 rotate-12 scale-150"><PulaGraphic className="w-64 h-64" /></div>
-                                        <h3 className="text-4xl font-black mb-6 flex items-center gap-4 italic text-[#00fbff]"><Icon name="hard-drive" className="w-12 h-12"/> DATABASE SCANNER</h3>
-                                        <p className="text-slate-400 font-bold mb-12 text-lg">正在掃描宇萌元宇宙中的所有共享資料與內部文件庫...</p>
-                                        <form onSubmit={(e) => {e.preventDefault(); window.open(`https://drive.google.com/drive/search?q=${encodeURIComponent(searchTerm)}`, '_blank')}} className="flex flex-col gap-6 relative z-10">
-                                            <input autoFocus type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="ENTER SEARCH QUERY..." className="bg-black/50 border-2 border-[#00fbff]/50 p-6 text-2xl font-black italic text-[#00fbff] outline-none focus:border-[#00fbff] rounded-xl"/>
-                                            <button type="submit" className="engage-btn p-6 text-2xl rounded-xl shadow-[0_0_20px_#00ff00]">INITIALIZE SCAN</button>
-                                        </form>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-8">
+                                        {trainingData[activeTab === 'level1' ? 'social' : activeTab === 'level2' ? 'winkiss' : activeTab === 'level3' ? 'marq' : activeTab === 'level4' ? 'admin' : 'bonus'].map(item => <Card key={item.id} item={item} />)}
                                     </div>
                                 )}
                             </div>
                         </main>
                     </div>
 
-                    {/* AI 對話框 - 深色霓虹風格 */}
-                    <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end">
+                    <div className="fixed bottom-10 right-10 z-[100] flex flex-col items-end">
                         {isChatOpen && (
-                            <div className="mb-6 w-80 md:w-96 h-[500px] bg-[#0d1127] border-2 border-[#00fbff] rounded-2xl flex flex-col overflow-hidden shadow-[0_0_30px_rgba(0,251,255,0.3)]">
-                                <div className="bg-black/50 p-5 border-b border-[#00fbff]/20 flex justify-between items-center text-[#00fbff] font-black italic">
-                                    <div className="flex items-center gap-3"><Icon name="bot" className="w-5 h-5" /> PULA.AI_ASSISTANT</div>
-                                    <button onClick={() => setIsChatOpen(false)} className="hover:text-white transition-colors"><Icon name="x" className="w-5 h-5" /></button>
+                            <div className="mb-6 w-80 md:w-96 h-[450px] bg-[#0d1127] border-2 border-[#00fbff] flex flex-col overflow-hidden shadow-[0_0_30px_rgba(0,251,255,0.3)] rounded-sm animate-in fade-in zoom-in duration-200">
+                                <div className="bg-black/50 p-4 border-b border-[#00fbff]/20 flex justify-between items-center text-[#00fbff] font-black italic text-xs">
+                                    <div className="flex items-center gap-2"><Icon name="bot" /> PULA_AI_SYSTEM</div>
+                                    <div className="flex items-center gap-3">
+                                        <button onClick={() => setIsSettingKey(!isSettingKey)} className="hover:text-white"><Icon name="settings" /></button>
+                                        <button onClick={() => setIsChatOpen(false)}><Icon name="x" /></button>
+                                    </div>
                                 </div>
-                                <div className="flex-grow p-6 overflow-y-auto space-y-6 chat-scrollbar bg-black/20">
-                                    {chatMessages.map((m, i) => (
-                                        <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                            <div className={`max-w-[90%] p-4 rounded-xl font-bold text-xs leading-relaxed ${m.role === 'user' ? 'bg-[#00fbff] text-black shadow-[0_0_10px_#00fbff]' : 'bg-[#1a1f3c] text-white border border-[#00fbff]/20'}`}>{m.content}</div>
+                                {isSettingKey ? (
+                                    <div className="p-6 flex flex-col gap-4 bg-[#161b33] flex-grow">
+                                        <p className="text-[10px] text-white font-bold uppercase">Settings: API Configuration</p>
+                                        <input type="password" value={tempKey} onChange={e => setTempKey(e.target.value)} placeholder="API KEY..." className="bg-black border border-[#00fbff]/30 p-3 text-xs text-[#00fbff] outline-none" />
+                                        <button onClick={() => { localStorage.setItem('arplanet_ai_key', tempKey); setIsSettingKey(false); }} className="engage-btn py-3">SAVE CONFIG</button>
+                                    </div>
+                                ) : (
+                                    <React.Fragment>
+                                        <div className="flex-grow p-5 overflow-y-auto space-y-4 chat-scrollbar bg-black/10">
+                                            {chatMessages.map((m, i) => (
+                                                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                                    <div className={`max-w-[85%] p-3 rounded-sm font-bold text-xs ${m.role === 'user' ? 'bg-[#00fbff] text-black shadow-[0_0_10px_#00fbff]' : 'bg-[#1a1f3c] text-slate-200'}`}>{m.content}</div>
+                                                </div>
+                                            ))}
+                                            <div ref={chatEndRef} />
                                         </div>
-                                    ))}
-                                    {isAiLoading && <div className="text-[#00fbff] animate-pulse text-[10px] font-black italic">PULA_IS_PROCESSING...</div>}
-                                    <div ref={chatEndRef} />
-                                </div>
-                                <form onSubmit={handleSendMessage} className="p-4 bg-black/50 border-t border-[#00fbff]/20 flex gap-3">
-                                    <input type="text" value={userInput} onChange={(e) => setUserInput(e.target.value)} placeholder="SEND SIGNAL..." className="flex-grow bg-black/50 border border-[#00fbff]/30 p-3 text-xs font-black text-[#00fbff] outline-none focus:border-[#00fbff] rounded-lg"/>
-                                    <button type="submit" disabled={isAiLoading} className="engage-btn p-3 rounded-lg"><Icon name="send" className="w-5 h-5" /></button>
-                                </form>
+                                        <form onSubmit={handleSend} className="p-4 bg-black/50 border-t border-[#00fbff]/20 flex gap-2">
+                                            <input type="text" value={userInput} onChange={e => setUserInput(e.target.value)} placeholder="SEND SIGNAL..." className="flex-grow bg-black/20 border border-[#00fbff]/30 p-2 text-xs text-[#00fbff] outline-none" />
+                                            <button type="submit" className="engage-btn p-2 rounded-sm"><Icon name="rocket" /></button>
+                                        </form>
+                                    </React.Fragment>
+                                )}
                             </div>
                         )}
-                        <button onClick={() => setIsChatOpen(!isChatOpen)} className={`w-16 h-16 rounded-full border-2 border-[#00fbff] flex items-center justify-center transition-all hover:scale-110 shadow-[0_0_15px_#00fbff] ${isChatOpen ? 'bg-black text-white' : 'bg-[#0d1127] text-[#00fbff]'}`}>
-                            {isChatOpen ? <Icon name="x" className="w-8 h-8" /> : <Icon name="bot" className="w-8 h-8" />}
+                        <button onClick={() => setIsChatOpen(!isChatOpen)} className={`w-14 h-14 rounded-full border-2 border-[#00fbff] flex items-center justify-center transition-all hover:scale-110 shadow-[0_0_15px_#00fbff] ${isChatOpen ? 'bg-black text-white' : 'bg-[#0d1127] text-[#00fbff]'} relative overflow-hidden`}>
+                            {isChatOpen ? <Icon name="x" /> : <PulaGraphic className="w-10 h-10 absolute top-1" />}
                         </button>
                     </div>
-
-                    <div className="fixed bottom-0 left-0 w-full h-2 pula-gradient z-0 opacity-50"></div>
                 </div>
             );
         };
