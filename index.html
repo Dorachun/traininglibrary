@@ -3,446 +3,526 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>宇萌新人教育訓練 - 普拉太空冒險版</title>
+    <title>AR Planet - Mission Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
-        :root {
-            --space-dark: #05060a;
-            --space-blue: #0b1426;
-            --ui-border: #1a1a3a;
-            --ui-shadow: #3a3a6a;
-            --energy-green: #39FF14;
-            --tech-blue: #00D4FF;
-            --card-bg-active: #111827;
-            --card-bg-cleared: #334155;
-            --neon-pink: #ff00ff;
-        }
-
-        body { 
-            font-family: 'Noto Sans TC', sans-serif; 
-            background: var(--space-dark);
-            overflow-x: hidden; 
-            margin: 0; 
-            padding-bottom: 50px; 
-            color: white;
-        }
-
-        /* --- 8-bit 像素與科技風格 UI --- */
-        .pixel-border { 
-            border: 4px solid var(--ui-border); 
-            box-shadow: 4px 4px 0px 0px var(--ui-shadow); 
-        }
-        .neon-text { text-shadow: 0 0 10px var(--tech-blue), 0 0 20px var(--tech-blue); }
-        .pixel-btn:active { transform: translateY(2px); box-shadow: 2px 2px 0px 0px var(--ui-shadow); }
-
-        /* --- 動畫特效 --- */
-        @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
-        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
-        @keyframes starPop {
-            0% { transform: translateY(0) scale(0.5) rotate(0deg); opacity: 0; }
-            50% { transform: translateY(-120px) scale(1.8) rotate(180deg); opacity: 1; }
-            100% { transform: translateY(-180px) scale(1) rotate(360deg); opacity: 0; }
-        }
-        @keyframes starMove { from { transform: translateY(0); } to { transform: translateY(-1000px); } }
+        @keyframes bounceX { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(8px); } }
+        @keyframes neonPulse { 0%, 100% { border-color: #00fbff; box-shadow: 0 0 5px #00fbff; } 50% { border-color: #0088ff; box-shadow: 0 0 15px #0088ff; } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         @keyframes typing { from { width: 0 } to { width: 100% } }
-
-        .animate-float { animation: float 3s infinite ease-in-out; }
-        .star-animation { position: absolute; pointer-events: none; animation: starPop 0.8s ease-out forwards; z-index: 100; }
         
-        /* 背景星空層 */
-        .bg-stars {
-            position: fixed; top: 0; left: 0; width: 100%; height: 200%;
-            background: transparent; z-index: 0;
-            background-image: 
-                radial-gradient(1px 1px at 10% 10%, #fff, transparent),
-                radial-gradient(1px 1px at 20% 50%, #fff, transparent),
-                radial-gradient(2px 2px at 40% 80%, #fff, transparent),
-                radial-gradient(1px 1px at 60% 20%, #fff, transparent),
-                radial-gradient(2px 2px at 80% 40%, #fff, transparent),
-                radial-gradient(1px 1px at 90% 70%, #fff, transparent);
-            background-size: 500px 500px;
-            animation: starMove 120s linear infinite;
+        body { 
+            background-color: #050a18; 
+            margin: 0; 
+            padding: 0; 
+            font-family: system-ui, -apple-system, sans-serif;
+            color: #ffffff;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 50%, #1a1f3c 0%, #050a18 100%);
         }
 
-        .card-active { background-color: var(--card-bg-active); border: 3px solid var(--tech-blue); }
-        .card-active:hover { box-shadow: 0 0 20px rgba(0, 212, 255, 0.3); border-color: white; transform: translateY(-5px); }
-        .card-cleared { background-color: var(--card-bg-cleared); opacity: 0.6; border: 3px solid #475569; }
-        
-        .sidebar-bg { background-color: rgba(13, 14, 23, 0.95); backdrop-filter: blur(10px); }
-        .mission-window { background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9)); }
-
-        /* 聊天室專用樣式 */
-        #chat-window {
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            transform-origin: bottom right;
+        .sidebar-active {
+            background-color: #00fbff !important;
+            color: #000 !important;
+            box-shadow: 0 0 20px #00fbff;
         }
-        .message-bubble { position: relative; max-width: 85%; padding: 10px 15px; margin-bottom: 10px; font-weight: bold; font-size: 14px; }
-        .pula-msg { background: var(--space-blue); border: 2px solid var(--tech-blue); color: white; border-radius: 15px 15px 15px 0; align-self: flex-start; }
-        .user-msg { background: var(--energy-green); border: 2px solid black; color: black; border-radius: 15px 15px 0 15px; align-self: flex-end; }
 
-        @media (max-width: 768px) { .sidebar { position: static; width: 100%; border-right: none; border-bottom: 4px solid var(--ui-border); } }
+        .sidebar-item {
+            background-color: #111833;
+            border: 1px solid rgba(0, 251, 255, 0.1);
+            transition: all 0.2s;
+        }
+
+        .mission-card {
+            background-color: #0c122b;
+            border: 1px solid #00fbff;
+            transition: all 0.2s;
+        }
         
-        select { appearance: none; -webkit-appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white"><path d="M5 8l5 5 5-5z"/></svg>'); background-repeat: no-repeat; background-position: right 10px center; }
+        .mission-card:hover {
+            border-color: #ffffff;
+            box-shadow: 0 0 15px rgba(0, 251, 255, 0.3);
+        }
+
+        .engage-btn {
+            background-color: #00ff00;
+            color: #000000;
+            font-weight: 900;
+            font-size: 9px;
+            padding: 4px 12px;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            cursor: pointer;
+            border-radius: 2px;
+            white-space: nowrap;
+            display: inline-block;
+        }
+
+        .engage-btn:hover {
+            background-color: #ffffff;
+            box-shadow: 0 0 12px #00ff00;
+        }
+
+        .portal-title {
+            font-style: italic;
+            font-weight: 900;
+            letter-spacing: -1px;
+            text-shadow: 0 0 10px #00fbff;
+        }
+
+        .chat-scrollbar::-webkit-scrollbar { width: 4px; }
+        .chat-scrollbar::-webkit-scrollbar-thumb { background: #00fbff; }
+        .animate-float { animation: float 3s ease-in-out infinite; }
         
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: var(--tech-blue); border-radius: 10px; }
+        .tutorial-overlay {
+            background-color: rgba(5, 10, 24, 0.98);
+            backdrop-filter: blur(15px);
+        }
+        
+        .typing-text {
+            overflow: hidden;
+            border-right: 2px solid #00fbff;
+            white-space: nowrap;
+            letter-spacing: 0.15em;
+            animation: typing 1s steps(20, end);
+        }
+
+        select option {
+            background-color: #0d1127;
+            color: #00fbff;
+        }
     </style>
 </head>
 <body>
-    <div class="bg-stars"></div>
+    <div id="root"></div>
 
-    <div class="h-6 bg-slate-900 w-full sticky top-0 z-50 border-b-4 border-indigo-900/50 flex items-center px-4 overflow-hidden text-white">
-        <div class="flex gap-2">
-            <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-            <div class="w-2 h-2 rounded-full bg-yellow-500"></div>
-            <div class="w-2 h-2 rounded-full bg-green-500"></div>
-        </div>
-        <div class="mx-auto text-[8px] font-black tracking-[1em] text-indigo-400 uppercase opacity-50">Cosmic Terminal Interface v3.5</div>
-    </div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
 
-    <div class="max-w-[1440px] mx-auto flex flex-col md:flex-row min-h-screen relative z-10 mt-6 px-4">
-        <!-- 側邊欄 -->
-        <aside class="md:w-80 sidebar-bg pixel-border p-6 flex flex-col sidebar mr-6 text-white h-fit sticky top-12">
-            <div class="text-center border-b-4 border-indigo-900/50 pb-6 mb-8">
-                <div class="inline-block p-2 mb-2 animate-float">
-                    <img src="普拉-002.png" alt="普拉" class="w-24 h-24 object-contain drop-shadow-[0_0_15px_rgba(0,212,255,0.6)]">
-                </div>
-                <h1 class="text-3xl font-black italic tracking-tighter uppercase leading-none neon-text">AR PLANET</h1>
-                <p class="text-[11px] font-bold bg-white text-black px-2 py-0.5 inline-block mt-2 uppercase pixel-border border-2">Mission Portal</p>
-            </div>
+        const PulaGraphic = ({ className = "w-10 h-10" }) => (
+            <svg viewBox="0 0 100 100" className={className} xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="45" fill="#3ABEF9" stroke="black" strokeWidth="4" />
+                <circle cx="35" cy="40" r="8" fill="white" stroke="black" strokeWidth="2" />
+                <circle cx="50" cy="35" r="8" fill="white" stroke="black" strokeWidth="2" />
+                <circle cx="65" cy="40" r="8" fill="white" stroke="black" strokeWidth="2" />
+                <circle cx="35" cy="42" r="3" fill="black" />
+                <circle cx="50" cy="37" r="3" fill="black" />
+                <circle cx="65" cy="42" r="3" fill="black" />
+                <path d="M35 70 Q50 85 65 70" stroke="black" strokeWidth="4" fill="white" />
+                <path d="M48 70 L52 70 L50 78 Z" fill="white" stroke="black" strokeWidth="1" />
+                <path d="M10 50 Q0 40 5 60" stroke="black" strokeWidth="4" fill="none" />
+                <path d="M90 50 Q100 40 95 60" stroke="black" strokeWidth="4" fill="none" />
+            </svg>
+        );
+
+        const Icon = ({ name, className = "w-4 h-4" }) => {
+            const icons = {
+                'rocket-color': <span className="text-2xl">🚀</span>,
+                'box-color': <span className="text-2xl">📦</span>,
+                'map-color': <span className="text-2xl">🌌</span>,
+                'doc-color': <span className="text-2xl">📄</span>,
+                'film-color': <span className="text-2xl">🎬</span>,
+                'search-color': <span className="text-2xl">🔍</span>,
+                'rocket': <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09zM12 15l-3-3m8.5-4.5L12 12m5.5-4.5L21 3m-4.5 4.5l-3-3m0 0C11.3 2.3 8.2 2 6.5 3.5s-1.2 4.8.7 7l1.3 1.3 5.5-5.5-1.3-1.3z" />,
+                'search': <React.Fragment><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></React.Fragment>,
+                'star': <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />,
+                'check': <polyline points="20 6 9 17 4 12" />,
+                'wifi': <React.Fragment><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><line x1="12" y1="20" x2="12.01" y2="20" /></React.Fragment>,
+                'bot': <React.Fragment><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></React.Fragment>,
+                'x': <React.Fragment><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></React.Fragment>,
+                'settings': <React.Fragment><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></React.Fragment>,
+                'info': <><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></>,
+                'hard-drive': <React.Fragment><rect x="2" y="14" width="20" height="8" rx="2" /><path d="M2 14L4.5 4h15L22 14" /></React.Fragment>,
+                'user': <><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>
+            };
+
+            if (name.includes('-color')) return icons[name];
+
+            return (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    {icons[name] || <circle cx="12" cy="12" r="10" />}
+                </svg>
+            );
+        };
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('level1');
+            const [playerName, setPlayerName] = useState('');
+            const [playerDept, setPlayerDept] = useState('');
+            const [completedTasks, setCompletedTasks] = useState([]);
+            const [progress, setProgress] = useState(0);
+            const [searchTerm, setSearchTerm] = useState('');
             
-            <div id="nav-levels" class="space-y-4"></div>
-            
-            <div class="mt-10 p-4 pixel-border bg-slate-900/80 border-indigo-500/30">
-                <div class="flex justify-between items-center mb-3">
-                    <div class="flex items-center gap-2 font-black text-sm">
-                        <span class="text-yellow-400 animate-pulse">★</span>
-                        <span id="cleared-count" class="text-yellow-400 font-mono tracking-widest">x00</span>
-                    </div>
-                    <span class="text-xs font-black italic text-[var(--tech-blue)]" id="progress-percent">0%</span>
-                </div>
-                <div class="w-full h-8 bg-black p-1.5 pixel-border border-2 border-slate-700 overflow-hidden">
-                    <div id="progress-bar" class="h-full bg-[var(--energy-green)] transition-all duration-700 relative shadow-[0_0_15px_rgba(57,255,20,0.5)]" style="width: 0%">
-                        <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
-                    </div>
-                </div>
-                <p class="text-[9px] text-center mt-2 text-[var(--tech-blue)] font-bold uppercase tracking-widest">Core Power Stability</p>
-            </div>
-        </aside>
+            const [onboardingStep, setOnboardingStep] = useState(0); 
+            const [isInitialLoading, setIsInitialLoading] = useState(true);
 
-        <!-- 主內容 -->
-        <main class="flex-grow">
-            <div class="flex flex-col xl:flex-row gap-6 mb-10 items-stretch">
-                <!-- 個人證 -->
-                <div id="profile-card" class="cursor-pointer group flex-shrink-0">
-                    <div class="flex items-stretch pixel-border bg-slate-800/80 hover:bg-slate-700/80 transition-all border-indigo-500/30 min-h-[110px]">
-                        <div class="bg-indigo-900/50 p-4 flex items-center border-r-4 border-indigo-900/50 text-[var(--tech-blue)]">
-                            <svg class="w-10 h-10 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H9a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        </div>
-                        <div class="px-6 py-2 flex flex-col justify-center min-w-[220px]" id="display-info">
-                            <p id="player-dept-display" class="text-[11px] font-black text-indigo-400 uppercase leading-none mb-1 text-left">TECHNICAL</p>
-                            <p id="player-name-display" class="text-3xl font-black italic tracking-tighter uppercase leading-tight text-white">PLAYER 1</p>
-                        </div>
-                        <div class="hidden p-4 flex flex-col gap-3 min-w-[260px] bg-slate-900" id="edit-info">
-                            <input id="input-name" class="w-full border-2 border-indigo-500/50 p-2 text-sm font-bold uppercase bg-black text-white focus:border-[var(--tech-blue)] outline-none" placeholder="輸入姓名">
-                            <select id="input-dept" class="w-full border-2 border-indigo-500/50 p-2 text-sm font-bold uppercase bg-black text-white focus:border-[var(--tech-blue)] outline-none">
-                                <option value="Technical">Technical</option>
-                                <option value="Creative">Creative</option>
-                                <option value="Operations">Operations</option>
-                                <option value="Management">Management</option>
-                                <option value="XRA">XRA</option>
-                            </select>
-                            <button id="save-btn" class="w-full bg-[var(--energy-green)] text-black py-2 font-black text-xs hover:bg-white transition-colors">UPLOAD DATA</button>
+            const [isChatOpen, setIsChatOpen] = useState(false);
+            const [chatMessages, setChatMessages] = useState([{ role: 'model', content: '你好！我是 Pula。已經為您更新了雲端圖書館的中文說明囉！' }]);
+            const [userInput, setUserInput] = useState('');
+            const [isAiLoading, setIsAiLoading] = useState(false);
+            const [isSettingKey, setIsSettingKey] = useState(false);
+            const [tempKey, setTempKey] = useState(localStorage.getItem('arplanet_ai_key') || "");
+            const chatEndRef = useRef(null);
+
+            const trainingData = {
+                social: [
+                    { id: 's1', name: '官網精選案例', url: 'https://www.arplanet.com.tw/', type: 'WEB', memo: '認識公司官網案例' },
+                    { id: 's2', name: '公司 Youtube 頻道', url: 'https://www.youtube.com/user/arplanet2', type: 'VIDEO', memo: '追蹤與訂閱' },
+                    { id: 's3', name: 'FB (下一秒製造所)', url: 'https://www.facebook.com/arplanet1/', type: 'SOCIAL', memo: '按讚掌握動態' },
+                    { id: 's4', name: 'IG (下一秒製造所)', url: 'https://www.instagram.com/arplanet.tw/', type: 'SOCIAL', memo: '追蹤視覺饗宴' },
+                    { id: 's5', name: 'Mew_IG', url: 'https://www.instagram.com/mew_mew_xr/', type: 'SOCIAL', memo: 'Metaverse Life' },
+                    { id: 's6', name: '普拉_IG', url: 'https://www.instagram.com/xr_pula_daily/', type: 'SOCIAL', memo: 'Pula Daily' },
+                    { id: 's7', name: 'Thread (下一秒製造所)', url: 'https://www.threads.net/@arplanet.tw', type: 'SOCIAL', memo: '按讚掌握動態' },
+                    { id: 's8', name: 'Podcast (下一秒製造所)', url: 'https://podcasts.apple.com/tw/podcast/%E4%B8%8B%E4%B8%80%E7%A7%92%E8%A3%BD%E9%80%A0%E6%89%80/id1616439770', type: 'AUDIO', memo: '請加入追蹤' }
+                ],
+                winkiss: [
+                    { id: 'w1', name: '1-1【winkiss】產品介紹簡報', url: 'https://docs.google.com/presentation/d/1KBeDulhzx6rJR-VmOA7E2OtreP6dCQul/edit', type: 'PPT', memo: 'PPT共34頁' },
+                    { id: 'w2', name: '2-1【winkiss】產品介紹影片', url: 'https://youtu.be/gtaod70-6rM', type: 'VIDEO', memo: '影片21分鐘' },
+                    { id: 'w3', name: 'winkiss 後台教學影片', url: 'https://youtu.be/qDITk1-dIUM', type: 'VIDEO', memo: '後台操作必看' },
+                    { id: 'w4', name: '【winkiss】案例網址', url: 'https://docs.google.com/spreadsheets/d/1flxW11ISTswFLZ6luGbRsMnNGOIO-BhpeRnobKJkdy/edit', type: 'SHEET', memo: '體驗實際客戶案例' },
+                    { id: 'w5', name: '3-1 【winkiss】素材規格', url: 'https://docs.google.com/presentation/d/1KBeDulhzx6rJR-VmOA7E2OtreP6dCQul/edit', type: 'PPT', memo: 'PPT共14頁' }
+                ],
+                marq: [
+                    { id: 'm1', name: '認識 marq+', url: 'https://drive.google.com/drive/folders/1F1Z5eCBnM-Xn2R8q4-kNllmsqy20VR2c', type: 'PPT', memo: 'PPT共61頁' },
+                    { id: 'm2', name: 'marq+ 後台解說影片', url: 'https://youtu.be/8On2YvcZV60', type: 'VIDEO', memo: '影片33分鐘' },
+                    { id: 'm3', name: 'marq+ 後台上架練習', url: 'http://mg.plus.marq.com.tw/', type: 'PRACTICE', memo: '帳號向 Sophy 申請' },
+                    { id: 'm4', name: 'marq+ 素材規格', url: 'https://docs.google.com/presentation/d/1cgwjml_kberYXGB9P13WnAiTH4zeYm2/edit', type: 'PPT', memo: 'PPT共48頁' },
+                    { id: 'm5', name: 'marq+ 內訓課程', url: 'https://drive.google.com/file/d/1tVPMjkx1m60tic2F51073-F8M19Bex9/view', type: 'PPT', memo: 'AR設計技巧' },
+                    { id: 'm6', name: '組合模組課程', url: 'https://youtu.be/181PtvOGR_O', type: 'VIDEO', memo: '實際編輯示範' }
+                ],
+                xr: [
+                    { id: 'x1', name: 'XR 基礎概論', url: 'https://docs.google.com/presentation/d/10ZHNwKBMwFfvRd-Nyolz9C-NEe6Eo18k/edit', type: 'PPT', memo: 'PPT共63頁' },
+                    { id: 'x2', name: 'AR 擴增實境創意案例', url: 'https://docs.google.com/presentation/d/1jOTWDAadgB3Bbr8oDue-Isy4BJUPi6S44zzWvIhXciA/edit', type: 'PPT', memo: 'PPT共61頁' },
+                    { id: 'x3', name: 'VR 體感學習簡報', url: 'https://docs.google.com/presentation/d/110zTOF70xm9oQKCxwiHZw_rxzP1IzEtO/edit', type: 'PPT', memo: 'PPT共56頁' },
+                    { id: 'x4', name: '閱讀《AR擴增實境創新思維》', url: 'https://www.books.com.tw/products/0010863008', type: 'BOOK', memo: '向管理部索取' }
+                ],
+                admin: [
+                    { id: 'a1', name: '人事出勤系統 (打卡)', url: 'https://hrm.mavohr.com/tube', type: 'TOOL', memo: '用於打卡、請假' },
+                    { id: 'a2', name: '同事介紹/座位表', url: 'https://docs.google.com/spreadsheets/d/1tMFIG21Pa0Wwel7e4bdYnmOxrZyFmVkmu7vr5iXsWs/edit', type: 'LINK', memo: '認識公司部門' },
+                    { id: 'a3', name: '會議室租用系統', url: 'http://bmr.isi999.com.tw/', type: 'LINK', memo: 'ID: 29151337 / PW: arplanet' },
+                    { id: 'a4', name: '提案技巧範本', url: 'https://docs.google.com/spreadsheets/d/1F0wObkb_UVluk3zTk4pXh3bA4A6jVICMzyOhCjH3Ng0/edit', type: 'LINK', memo: '提案範本' },
+                    { id: 'a5', name: '設計部專案時間表', url: 'https://docs.google.com/spreadsheets/d/1YyudKr1RWwz2HPtPfIXox11-rd5p52TW6R6aC0aAHBI/edit', type: 'FORM', memo: '美術需求填寫' }
+                ],
+                bonus: [
+                    { id: 'v1', name: '2021 XR 行銷技法', url: 'https://www.youtube.com/watch?v=2Rn9fu1WSD8', type: 'SEMINAR', memo: '了解 XR 行銷' },
+                    { id: 'v2', name: 'WebAR 應用與技術解析', url: 'https://youtu.be/cPTurF6GFF4', type: 'SEMINAR', memo: 'WebAR 解析' },
+                    { id: 'v3', name: 'AI 工作術營運中心', url: 'https://youtu.be/r2cCgLyFODE', type: 'SEMINAR', memo: 'AI 工具應用' },
+                    { id: 'v4', name: 'LLM 原理 ChatGPT', url: 'https://youtu.be/tKoxqZP4xAw', type: 'SEMINAR', memo: 'LLM 原理' },
+                    { id: 'v5', name: 'Stable Diffusion Workshop', url: 'https://youtu.be/HlifvsjcZLk', type: 'SEMINAR', memo: 'AI 繪圖' }
+                ]
+            };
+
+            useEffect(() => {
+                const n = localStorage.getItem('arplanet_player_name');
+                const d = localStorage.getItem('arplanet_player_dept');
+                const t = localStorage.getItem('arplanet_completed_tasks');
+                
+                setTimeout(() => {
+                    setIsInitialLoading(false);
+                    if (n && d) {
+                        setPlayerName(n);
+                        setPlayerDept(d);
+                        setOnboardingStep(4);
+                    } else {
+                        setOnboardingStep(0);
+                    }
+                }, 1500);
+
+                if (t) setCompletedTasks(JSON.parse(t));
+            }, []);
+
+            useEffect(() => {
+                if (onboardingStep === 4) {
+                    localStorage.setItem('arplanet_player_name', playerName);
+                    localStorage.setItem('arplanet_player_dept', playerDept);
+                }
+                localStorage.setItem('arplanet_completed_tasks', JSON.stringify(completedTasks));
+                const all = Object.values(trainingData).flat();
+                setProgress(all.length ? Math.round((completedTasks.length / all.length) * 100) : 0);
+            }, [completedTasks, playerName, playerDept, onboardingStep]);
+
+            // ==========================================
+            // 這裡已經替換成串接真實後端 API 的版本
+            // ==========================================
+            const handleSend = async (e) => {
+                e.preventDefault();
+                if (!userInput.trim() || isAiLoading) return;
+                
+                const msg = userInput; 
+                setUserInput(''); // 清空輸入框
+                
+                // 先把使用者的訊息顯示在畫面上
+                setChatMessages(p => [...p, { role: 'user', content: msg }]);
+                setIsAiLoading(true); // 開啟讀取狀態
+
+                try {
+                    // 呼叫你的 API
+                    const response = await fetch('https://chatbot-azure-chi-80.vercel.app/api/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        // 依照你的要求，Payload 格式為 { "question" : "XXX" }
+                        body: JSON.stringify({ question: msg })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`通訊異常: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    // 依照你的要求，取得回傳值中的 answer，並顯示在畫面上
+                    setChatMessages(p => [...p, { 
+                        role: 'model', 
+                        content: data.answer || "連線成功，但未獲取有效訊號。" 
+                    }]);
+
+                } catch (error) {
+                    console.error("AI 系統連線錯誤:", error);
+                    // 發生錯誤時的防呆提示
+                    setChatMessages(p => [...p, { 
+                        role: 'model', 
+                        content: "⚠️ 警告：無法連接 API 伺服器，請確認網路狀態或跨域請求 (CORS) 設定。" 
+                    }]);
+                } finally {
+                    setIsAiLoading(false); // 關閉讀取狀態
+                }
+            };
+            // ==========================================
+
+            const LevelButton = ({ id, icon, label, sub }) => (
+                <button onClick={() => { setActiveTab(id); setSearchTerm(''); }} className={`w-full group mb-3 transition-all ${activeTab === id ? '' : 'hover:translate-x-1'}`}>
+                    <div className={`flex items-center gap-4 p-4 rounded-md sidebar-item ${activeTab === id ? 'sidebar-active' : 'text-slate-400'}`}>
+                        <div className="w-10 h-10 flex items-center justify-center"><Icon name={icon} /></div>
+                        <div className="text-left">
+                            <p className="text-[12px] font-black leading-none uppercase">{label}</p>
+                            <p className="text-[9px] opacity-60 mt-1 uppercase font-bold tracking-tighter">{sub}</p>
                         </div>
                     </div>
-                </div>
+                </button>
+            );
 
-                <!-- 任務說明視窗 -->
-                <div class="flex-grow mission-window pixel-border p-6 border-l-8 border-l-[var(--tech-blue)] flex items-start gap-5 shadow-[0_0_15px_rgba(0,212,255,0.1)]">
-                    <div class="w-12 h-12 flex-shrink-0 bg-black/40 pixel-border border-2 flex items-center justify-center text-[var(--tech-blue)] font-black text-2xl animate-pulse">!</div>
-                    <div>
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="w-2 h-2 bg-[var(--tech-blue)] rounded-full"></span>
-                            <p class="text-[var(--tech-blue)] font-black text-xs uppercase tracking-widest">Incoming Message</p>
-                        </div>
-                        <p class="text-white font-black text-lg leading-relaxed">點擊左側星星收集能量星辰，完成所有新人太空任務！</p>
-                        <div class="mt-2 flex items-center gap-4">
-                            <span class="text-yellow-400 font-bold text-sm bg-yellow-400/10 px-2 py-1 pixel-border border">※ 請使用公司信箱登錄 ※</span>
-                            <div class="text-[var(--tech-blue)] flex items-center gap-2">
-                                <span class="text-[10px] opacity-60">WIFI:</span>
-                                <span class="text-xs font-black tracking-tighter">AR3F-5G / ar-planet2915</span>
+            const Card = ({ item }) => {
+                const isDone = completedTasks.includes(item.id);
+                return (
+                    <div className={`mission-card p-6 flex flex-col md:flex-row items-center gap-6 relative ${isDone ? 'opacity-40' : ''}`}>
+                        <div className="flex-shrink-0">
+                            <div onClick={() => !isDone ? setCompletedTasks(p => [...p, item.id]) : setCompletedTasks(p => p.filter(id => id !== item.id))} className={`w-10 h-10 border border-[#00fbff]/40 flex items-center justify-center cursor-pointer transition-all ${isDone ? 'text-[#00ff00] border-[#00ff00]' : 'text-slate-500 hover:text-[#00fbff]'}`}>
+                                <Icon name="star" className="w-5 h-5" />
                             </div>
                         </div>
+                        <div className="flex-grow text-center md:text-left">
+                            <h3 className="font-bold text-sm text-white tracking-tight mb-2 italic uppercase">{item.name}</h3>
+                            <div className="flex items-center justify-center md:justify-start gap-3">
+                                <span className="text-[7px] border border-[#00fbff]/50 px-1.5 py-0.5 text-[#00fbff] font-black">{item.type}</span>
+                                <span className="text-[9px] text-slate-400 font-bold flex items-center gap-1"><Icon name="info" className="w-2.5 h-2.5" /> {item.memo}</span>
+                            </div>
+                        </div>
+                        <div className="mt-4 md:mt-0 ml-auto flex-shrink-0"><a href={item.url} target="_blank" className="engage-btn">ENGAGE LINK</a></div>
                     </div>
-                </div>
-            </div>
+                );
+            };
 
-            <!-- 任務卡片區 -->
-            <div id="content-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-12"></div>
-        </main>
-    </div>
-
-    <!-- 底部裝飾 -->
-    <div class="fixed bottom-0 left-0 w-full h-16 bg-slate-900 border-t-4 border-indigo-900/50 z-20 overflow-hidden flex items-end">
-        <div class="w-full h-6 bg-black/40 flex">
-            <div class="flex-grow border-r-2 border-indigo-900/20"></div>
-            <div class="flex-grow border-r-2 border-indigo-900/20"></div>
-            <div class="flex-grow border-r-2 border-indigo-900/20"></div>
-            <div class="flex-grow border-r-2 border-indigo-900/20"></div>
-        </div>
-    </div>
-
-    <!-- AI 聊天室懸浮按鈕 -->
-    <div class="fixed bottom-20 right-6 z-[100]">
-        <button onclick="toggleChat()" class="group relative flex items-center justify-center p-2">
-            <div class="absolute inset-0 bg-[var(--tech-blue)] rounded-full blur-md opacity-40 group-hover:opacity-100 transition-opacity"></div>
-            <img src="普拉-002.png" alt="AI Pula" class="w-16 h-16 object-contain relative animate-float pixel-img drop-shadow-[0_0_10px_white]">
-            <div class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border-2 border-white animate-bounce">AI</div>
-        </button>
-
-        <!-- 聊天視窗 -->
-        <div id="chat-window" class="hidden absolute bottom-20 right-0 w-[350px] max-h-[500px] pixel-border sidebar-bg flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden">
-            <div class="bg-indigo-900/80 p-4 border-b-4 border-indigo-900 flex justify-between items-center">
-                <div class="flex items-center gap-2">
-                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span class="font-black text-sm tracking-tighter uppercase">Pula Assistant Online</span>
-                </div>
-                <button onclick="toggleChat()" class="text-white hover:text-red-500 font-black">✕</button>
-            </div>
-            
-            <div id="chat-messages" class="flex-grow overflow-y-auto p-4 flex flex-col min-h-[300px] max-h-[350px] space-y-4">
-                <div class="message-bubble pula-msg">宇宙探險員您好！我是普拉 AI，有什麼教育訓練相關的問題想問我嗎？</div>
-            </div>
-
-            <div id="chat-loading" class="hidden px-4 py-2 text-[10px] italic text-[var(--tech-blue)] animate-pulse">普拉正在連線銀河腦庫中...</div>
-
-            <div class="p-4 bg-black/40 border-t-4 border-indigo-900/50 flex gap-2">
-                <input id="chat-input" type="text" placeholder="請輸入問題..." class="flex-grow bg-slate-800 border-2 border-indigo-500/30 p-2 text-xs font-bold text-white outline-none focus:border-[var(--tech-blue)]">
-                <button onclick="sendChatMessage()" class="bg-[var(--tech-blue)] text-black px-4 py-2 font-black text-xs pixel-border border-2">SEND</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 過關特效 -->
-    <div id="clear-overlay" class="fixed inset-0 z-[110] flex flex-col items-center justify-center bg-black/90 backdrop-blur-md hidden">
-        <div class="p-12 pixel-border bg-slate-900 text-center transform -rotate-1 relative overflow-hidden border-indigo-500 shadow-[0_0_50px_var(--tech-blue)]">
-            <div class="absolute inset-0 bg-gradient-to-b from-indigo-500/10 to-transparent animate-pulse"></div>
-            <img src="普拉-002.png" alt="普拉" class="w-36 h-36 mx-auto mb-6 animate-float relative z-10">
-            <h2 class="text-6xl font-black text-white italic mb-4 neon-text relative z-10">MISSION CLEAR!</h2>
-            <p id="congrats-text" class="text-yellow-400 font-bold text-2xl uppercase mb-8 relative z-10 tracking-[0.2em]"></p>
-            <button onclick="resetTraining()" class="px-8 py-3 bg-[var(--tech-blue)] text-black font-black text-lg pixel-border hover:bg-white transition-all relative z-10">SYSTEM REBOOT</button>
-        </div>
-    </div>
-
-    <script>
-        const levels = [
-            { id: 'level1', label: 'WORLD 1-1', sub: '認識宇萌', icon: '🚀' },
-            { id: 'level2', label: 'WORLD 1-2', sub: '產品與素材', icon: '📦' },
-            { id: 'level3', label: 'WORLD 1-3', sub: 'XR 知識庫', icon: '🌌' },
-            { id: 'level4', label: 'WORLD 1-4', sub: '行政與表單', icon: '📑' },
-            { id: 'level5', label: 'BONUS', sub: '精選分享會', icon: '🎬' }
-        ];
-
-        const trainingData = {
-            level1: [
-                { id: 's1', name: '官網精選案例', url: 'https://www.arplanet.com.tw/case-situation/', type: 'WEB', memo: '認識公司官網案例' },
-                { id: 's2', name: '公司 Youtube 頻道', url: 'https://www.youtube.com/user/arplanet2', type: 'VIDEO', memo: '追蹤與訂閱' },
-                { id: 's3', name: 'FB (下一秒製造所)', url: 'https://www.facebook.com/arplanet.tw/', type: 'SOCIAL', memo: '按讚掌握動態' },
-                { id: 's4', name: 'IG (下一秒製造所)', url: 'https://www.instagram.com/arplanet.tw', type: 'SOCIAL', memo: '追蹤掌握視覺' },
-                { id: 's5', name: 'Mew_IG', url: 'https://www.instagram.com/mew_reality/', type: 'SOCIAL', memo: 'Metaverse Life' },
-                { id: 's6', name: '普拉_IG', url: 'https://www.instagram.com/xr_pula_daily/', type: 'SOCIAL', memo: 'Pula Daily' }
-            ],
-            level2: [
-                { id: 'w1', name: 'Winkiss 產品介紹簡報', url: 'https://docs.google.com/presentation/d/1KBeDulhzx6rJR-VmOA7E2OtreP6dCQul/edit', type: 'PPT', memo: '34頁核心功能' },
-                { id: 'w2', name: 'Winkiss 介紹影片', url: 'https://youtu.be/gtaod70-6rM', type: 'VIDEO', memo: '21分鐘精華' },
-                { id: 'w3', name: 'Winkiss 後台教學', url: 'https://youtu.be/qDITk1-dIUM', type: 'VIDEO', memo: '後台操作實錄' },
-                { id: 'w4', name: 'marq+ 基本介紹', url: 'https://drive.google.com/drive/folders/1F1Z5eCBnM-Xn2R8q4-kNllmsqy20VR2c', type: 'PPT', memo: '61頁完整指南' },
-                { id: 'w5', name: 'marq+ 素材規格說明', url: 'https://docs.google.com/presentation/d/1cgwjml_kberYXGB9P13WnAiTH4zeYm2/edit', type: 'PPT', memo: '設計規格對接' },
-                { id: 'w6', name: '組合模組教學影片', url: 'https://youtu.be/z04Cin-GmRzA', type: 'VIDEO', memo: '65分鐘詳細教學' }
-            ],
-            level3: [
-                { id: 'x1', name: 'XR 基礎概論', url: 'https://docs.google.com/presentation/d/10ZHNwKBMwFfvRd-Nyolz9C-NEe6Eo18k/edit', type: 'PPT', memo: '產業必備知識' },
-                { id: 'x2', name: 'AR 擴增實境創意案例', url: 'https://docs.google.com/presentation/d/1jOTWDAadgB3Bbr8oDue-Isy4BJUPi6S44zzWvIhXciA/edit', type: 'PPT', memo: '設計思維引導' },
-                { id: 'x3', name: 'VR 體感學習簡報', url: 'https://docs.google.com/presentation/d/110zTOF70xm9oQKCxwiHZw_rxzP1IzEtO/edit', type: 'PPT', memo: '大螢幕互動應用' },
-                { id: 'x4', name: '官網 AR 風向文', url: 'https://www.arplanet.com.tw/trends', type: 'WEB', memo: 'SEO與趨勢觀測' }
-            ],
-            level4: [
-                { id: 'a1', name: '人事出勤系統 (Mavo)', url: 'https://hrm.mavohr.com/tube', type: 'LINK', memo: '打卡與請假管理' },
-                { id: 'a2', name: '同事介紹/座位表', url: 'https://docs.google.com/spreadsheets/d/1tMFIG21Pa0Wwel7e4bdYnmOxrZyFmVkmu7vr5iXsWs/edit', type: 'SHEET', memo: '認識大家' },
-                { id: 'a3', name: '會議室租用系統', url: 'http://bmr.isi999.com.tw/', type: 'LINK', memo: '預約平台' },
-                { id: 'a4', name: '設計部製作時間表', url: 'https://docs.google.com/spreadsheets/d/1YyudKr1RWwz2HPtPfIXox11-rd5p52TW6R6aC0aAHBI/edit', type: 'SHEET', memo: '需求排程' }
-            ],
-            level5: [
-                { id: 'v1', name: 'WebAR 技術解析', url: 'https://youtu.be/cPTurF6GFF4', speaker: '莉婷', memo: '技術分享' },
-                { id: 'v2', name: 'AI 工作術分享', url: 'https://youtu.be/r2cCgLyFODE', speaker: 'Coco', memo: '營運效率' },
-                { id: 'v3', name: 'Stable Diffusion 工作坊', url: 'https://youtu.be/HlifvsjcZLk', speaker: 'Haoming', memo: '生成式AI' }
-            ]
-        };
-
-        let state = {
-            activeTab: 'level1',
-            playerName: localStorage.getItem('arp_name') || 'PLAYER 1',
-            playerDept: localStorage.getItem('arp_dept') || 'TECHNICAL',
-            completedTasks: JSON.parse(localStorage.getItem('arp_tasks')) || []
-        };
-
-        const totalTasksCount = Object.values(trainingData).flat().length;
-
-        function render() {
-            const navEl = document.getElementById('nav-levels');
-            navEl.innerHTML = levels.map(lv => `
-                <button onclick="setActiveTab('${lv.id}')" class="w-full pixel-btn pixel-border p-5 flex items-center gap-4 transition-all duration-300 ${state.activeTab === lv.id ? 'bg-[var(--tech-blue)] text-black shadow-[0_0_20px_var(--tech-blue)]' : 'bg-slate-800/80 text-white hover:bg-slate-700'}">
-                    <div class="text-3xl">${lv.icon}</div>
-                    <div class="font-black text-left flex-grow">
-                        <p class="text-lg md:text-xl font-black uppercase tracking-tighter ${state.activeTab === lv.id ? 'text-black' : 'text-[var(--tech-blue)]'}">${lv.sub}</p>
-                        <p class="text-[10px] opacity-60 font-mono">${lv.label}</p>
-                    </div>
-                    ${state.activeTab === lv.id ? '<span class="animate-bounce-x text-black text-xl">▶</span>' : ''}
-                </button>
-            `).join('');
-
-            const gridEl = document.getElementById('content-grid');
-            gridEl.innerHTML = trainingData[state.activeTab].map(item => {
-                const isDone = state.completedTasks.includes(item.id);
-                let typeIcon = '📄';
-                if (item.type === 'VIDEO') typeIcon = '📽️';
-                if (item.type === 'SOCIAL') typeIcon = '💬';
-
-                const starIcon = isDone 
-                    ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-7 h-7 text-yellow-400 drop-shadow-[0_0_8px_gold]"><path d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" /></svg>`
-                    : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-7 h-7 opacity-30 text-yellow-200"><path d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>`;
-
-                return `
-                    <div class="pixel-border p-6 flex flex-col justify-between min-h-[11rem] relative ${isDone ? 'card-cleared' : 'card-active'} transition-all group">
-                        <div class="flex gap-5 relative z-10">
-                            <button onclick="toggleTask('${item.id}', event)" class="w-14 h-14 bg-slate-900 pixel-border border-2 flex items-center justify-center transition-all active:scale-90 hover:scale-110 shadow-lg">
-                                ${starIcon}
-                            </button>
-                            <div>
-                                <h3 class="font-black text-lg leading-tight group-hover:text-[var(--tech-blue)] transition-colors">${item.name}</h3>
-                                <div class="flex items-center gap-2 mt-2">
-                                    <span class="bg-indigo-900/50 text-[var(--tech-blue)] text-[9px] px-2 py-0.5 font-black uppercase pixel-border border-2 border-indigo-500/30">${item.type || item.speaker}</span>
-                                    <span class="text-xs font-bold opacity-70">${typeIcon} ${item.memo}</span>
+            const Onboarding = () => {
+                return (
+                    <div className="fixed inset-0 z-[200] tutorial-overlay flex items-center justify-center p-6">
+                        <div className="max-w-2xl w-full bg-[#0d1127] border-2 border-[#00fbff] shadow-[0_0_30px_rgba(0,251,255,0.4)] p-10 rounded-sm">
+                            <div className="flex flex-col md:flex-row gap-10 items-center">
+                                <div className="animate-float shrink-0"><PulaGraphic className="w-40 h-40" /></div>
+                                <div className="flex-grow space-y-6">
+                                    {onboardingStep === 0 && (
+                                        <div className="space-y-6">
+                                            <div className="portal-title text-3xl text-[#00fbff]">WELCOME TO AR PLANET</div>
+                                            <p className="text-sm font-bold leading-relaxed text-slate-300 italic">歡迎加入宇萌數位科技任務入口！系統正在偵測新 Operator 的生命訊號...</p>
+                                            <button onClick={() => setOnboardingStep(1)} className="engage-btn w-full py-4 text-xl">INITIALIZE IDENTITY</button>
+                                        </div>
+                                    )}
+                                    {onboardingStep === 1 && (
+                                        <div className="space-y-6 animate-in slide-in-from-right duration-300">
+                                            <p className="text-xs font-black text-[#00fbff] uppercase tracking-widest">Identify Yourself:</p>
+                                            <h2 className="text-2xl font-black italic">你的 Operator 代號（姓名）？</h2>
+                                            <input autoFocus type="text" value={playerName} onChange={e => setPlayerName(e.target.value.toUpperCase())} onKeyDown={e => e.key === 'Enter' && playerName && setOnboardingStep(2)} placeholder="ENTER CALLSIGN..." className="w-full bg-black/50 border-2 border-[#00fbff]/50 p-4 text-xl font-black text-[#00fbff] outline-none focus:border-white uppercase" />
+                                            <button disabled={!playerName} onClick={() => setOnboardingStep(2)} className="engage-btn w-full py-3 disabled:grayscale">NEXT PHASE</button>
+                                        </div>
+                                    )}
+                                    {onboardingStep === 2 && (
+                                        <div className="space-y-6 animate-in slide-in-from-right duration-300">
+                                            <p className="text-xs font-black text-[#00fbff] uppercase tracking-widest">Sector Assign:</p>
+                                            <h2 className="text-2xl font-black italic">你的隸屬部門？</h2>
+                                            <div className="relative">
+                                                <select autoFocus value={playerDept} onChange={e => setPlayerDept(e.target.value)} className="w-full bg-black/50 border-2 border-[#00fbff]/50 p-4 text-xl font-black text-[#00fbff] outline-none focus:border-white appearance-none cursor-pointer">
+                                                    <option value="" disabled>SELECT SECTOR...</option>
+                                                    <option value="TECHNICAL">TECHNICAL</option>
+                                                    <option value="CREATIVE">CREATIVE</option>
+                                                    <option value="OPERATIONS">OPERATIONS</option>
+                                                    <option value="MANAGEMENT">MANAGEMENT</option>
+                                                    <option value="XRA">XRA</option>
+                                                </select>
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#00fbff]">▼</div>
+                                            </div>
+                                            <button disabled={!playerDept} onClick={() => setOnboardingStep(3)} className="engage-btn w-full py-3 disabled:grayscale">CONFIRM REGISTRY</button>
+                                        </div>
+                                    )}
+                                    {onboardingStep === 3 && (
+                                        <div className="space-y-6 animate-in slide-in-from-right duration-300">
+                                            <p className="text-xs font-black text-[#00fbff] uppercase tracking-widest">Tutorial Phase:</p>
+                                            <h2 className="text-xl font-black italic">新手指南</h2>
+                                            <ul className="text-[11px] space-y-4 font-bold text-slate-300">
+                                                <li className="flex items-start gap-2"><span className="text-[#00ff00]">●</span> 點擊左側「星星」收集能量星辰。</li>
+                                                <li className="flex items-start gap-2"><span className="text-[#00fbff]">●</span> 使用「雲端圖書館」掃描共享硬碟。</li>
+                                                <li className="flex items-start gap-2"><span className="text-yellow-400">●</span> 點擊右下角「普拉」開啟 AI 對話。</li>
+                                            </ul>
+                                            <button onClick={() => setOnboardingStep(4)} className="engage-btn w-full py-4 text-xl">LOCKED AND LOADED</button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
-                        <div class="flex justify-end mt-4 relative z-10">
-                            <a href="${item.url}" target="_blank" class="bg-[var(--energy-green)] text-black px-6 py-2 pixel-border font-black text-xs pixel-btn uppercase tracking-widest hover:bg-white transition-all">Engage Link</a>
-                        </div>
                     </div>
-                `;
-            }).join('');
+                );
+            };
 
-            document.getElementById('player-name-display').innerText = state.playerName;
-            document.getElementById('player-dept-display').innerText = state.playerDept;
-            document.getElementById('cleared-count').innerText = `x${state.completedTasks.length.toString().padStart(2, '0')}`;
-            
-            const percent = Math.round((state.completedTasks.length / totalTasksCount) * 100);
-            document.getElementById('progress-percent').innerText = `${percent}%`;
-            document.getElementById('progress-bar').style.width = `${percent}%`;
+            return (
+                <div className="min-h-screen">
+                    {isInitialLoading && (
+                        <div className="fixed inset-0 z-[300] bg-[#050a18] flex flex-col items-center justify-center space-y-4">
+                            <div className="typing-text text-[#00fbff] font-black italic text-xl uppercase tracking-widest">System_Initializing_v2.0</div>
+                            <div className="w-64 h-1 bg-white/10 relative overflow-hidden rounded-full"><div className="absolute inset-0 bg-[#00fbff] animate-[typing_2s_ease-in-out_infinite]"></div></div>
+                        </div>
+                    )}
 
-            if (percent === 100) {
-                document.getElementById('clear-overlay').classList.remove('hidden');
-                document.getElementById('congrats-text').innerText = `[${state.playerDept}] ${state.playerName} 已成功征服宇宙！`;
-            } else {
-                document.getElementById('clear-overlay').classList.add('hidden');
-            }
-        }
+                    {onboardingStep < 4 && !isInitialLoading && <Onboarding />}
 
-        // --- AI 聊天室邏輯 ---
-        function toggleChat() {
-            const win = document.getElementById('chat-window');
-            win.classList.toggle('hidden');
-            if (!win.classList.contains('hidden')) {
-                document.getElementById('chat-input').focus();
-            }
-        }
+                    <div className="flex flex-col md:flex-row">
+                        <aside className="w-full md:w-[320px] bg-[#0d1127] border-r border-[#00fbff]/20 flex flex-col p-8 sticky top-0 h-screen z-50">
+                            <div className="text-center mb-10">
+                                <div className="flex items-center justify-center gap-2 text-slate-400 mb-8 cursor-pointer hover:text-white" onClick={() => setOnboardingStep(1)}>
+                                    <div className="w-10 h-10 rounded-full bg-[#00fbff]/10 border border-[#00fbff]/40 flex items-center justify-center relative overflow-hidden"><PulaGraphic className="w-12 h-12 absolute top-1" /></div>
+                                    <span className="text-sm font-black tracking-widest uppercase">Operator: {playerName || '???'}</span>
+                                </div>
+                                <h1 className="portal-title text-4xl text-white mb-1 tracking-tighter">AR PLANET</h1>
+                                <div className="bg-black/40 border border-[#00fbff]/30 px-4 py-0.5 inline-block rounded-sm"><span className="text-[10px] font-black text-[#00fbff] tracking-[3px]">MISSION PORTAL</span></div>
+                            </div>
 
-        async function sendChatMessage() {
-            const input = document.getElementById('chat-input');
-            const messages = document.getElementById('chat-messages');
-            const loading = document.getElementById('chat-loading');
-            const question = input.value.trim();
+                            <nav className="flex-grow overflow-y-auto chat-scrollbar pr-2">
+                                <LevelButton id="level1" icon="rocket-color" label="認識宇萌" sub="WORLD 1-1" />
+                                <LevelButton id="level2" icon="box-color" label="產品與素材" sub="WORLD 1-2" />
+                                <LevelButton id="level3" icon="map-color" label="XR 知識庫" sub="WORLD 1-3" />
+                                <LevelButton id="level4" icon="doc-color" label="行政與表單" sub="WORLD 1-4" />
+                                <LevelButton id="level5" icon="film-color" label="精選分享會" sub="BONUS" />
+                                <div className="mt-6 border-t border-[#00fbff]/10 pt-6"><LevelButton id="level-search" icon="search-color" label="雲端圖書館" sub="DATABASE SCAN" /></div>
+                            </nav>
 
-            if (!question) return;
+                            <div className="mt-auto pt-6">
+                                <div className="flex justify-between items-end mb-2">
+                                    <div className="flex items-center gap-2 text-xs font-black text-yellow-500"><Icon name="star" className="w-3 h-3 fill-yellow-500"/><span>x{completedTasks.length.toString().padStart(2,'0')}</span></div>
+                                    <span className="text-[#00fbff] text-xs font-black">{progress}%</span>
+                                </div>
+                                <div className="w-full h-3 bg-black/50 border border-[#00fbff]/20 p-0.5"><div className="h-full bg-[#00ff00] transition-all duration-1000 shadow-[0_0_10px_#00ff00]" style={{ width: `${progress}%` }}></div></div>
+                                <p className="text-[8px] text-center text-[#00fbff] font-black mt-2 tracking-widest opacity-60 uppercase">Core Power Stability</p>
+                            </div>
+                        </aside>
 
-            // 新增使用者訊息
-            messages.innerHTML += `<div class="message-bubble user-msg">${question}</div>`;
-            input.value = '';
-            messages.scrollTop = messages.scrollHeight;
+                        <main className="flex-grow p-10 md:p-14 relative">
+                            <div className="max-w-6xl mx-auto">
+                                <div className="flex flex-col md:flex-row gap-6 mb-16 items-stretch">
+                                    <div className="bg-[#161b33] border border-[#00fbff]/20 p-6 flex items-center gap-6 min-w-[300px]">
+                                        <div className="w-12 h-12 bg-blue-600/10 border border-blue-600/40 flex items-center justify-center relative overflow-hidden"><PulaGraphic className="w-14 h-14 absolute top-1" /></div>
+                                        <div>
+                                            <p className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Technical Status</p>
+                                            <h2 className="text-2xl font-black italic">{playerName || 'UNKNOWN'}</h2>
+                                            <p className="text-[10px] font-bold text-slate-500">{playerDept || 'Sector Pending'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex-grow bg-[#0c122b] border-2 border-[#00fbff] border-l-8 p-6 relative">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 bg-black flex items-center justify-center font-black text-xl text-cyan-400 border border-cyan-400">!</div>
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div><span className="text-[10px] font-black text-cyan-400 tracking-widest uppercase">Incoming Message</span></div>
+                                                <p className="text-sm font-bold italic">點擊左側星星收集能量，完成新人太空任務！</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-            // 顯示讀取中
-            loading.classList.remove('hidden');
+                                {activeTab === 'level-search' ? (
+                                    <div className="lg:col-span-2 bg-[#0d1127] border-2 border-[#00fbff] p-12 relative overflow-hidden rounded-sm">
+                                        <div className="absolute right-0 bottom-0 opacity-10 rotate-12 scale-150 pointer-events-none animate-float"><PulaGraphic className="w-64 h-64" /></div>
+                                        <div className="relative z-10">
+                                            <h3 className="text-4xl font-black italic text-[#00fbff] mb-2 uppercase tracking-tighter">Database Scanner</h3>
+                                            <p className="text-[#00fbff] font-bold text-lg mb-8 italic">宇萌數位科技 雲端圖書館</p>
+                                            
+                                            <div className="bg-[#161b33] border border-[#00fbff]/30 p-6 rounded mb-8 space-y-4">
+                                                <p className="text-sm font-bold text-slate-300 leading-relaxed">
+                                                    正在掃描宇萌元宇宙中的所有共享資料與內部文件庫...<br/>
+                                                    <span className="text-[#00fbff]">●</span> 請輸入關鍵字搜尋公司 Google 共用雲端硬碟。<br/>
+                                                    <span className="text-[#00ff00]">●</span> 搜尋結果將於新分頁開啟，請確保已登入公司 Google 帳號。
+                                                </p>
+                                            </div>
 
-            try {
-                const response = await fetch('https://chatbot-azure-chi-80.vercel.app/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ question: question })
-                });
+                                            <form onSubmit={(e) => { e.preventDefault(); window.open(`https://drive.google.com/drive/search?q=${encodeURIComponent(searchTerm)}`, '_blank'); }} className="flex flex-col gap-6">
+                                                <input autoFocus value={searchTerm} onChange={e => setSearchTerm(e.target.value)} type="text" placeholder="請輸入搜尋關鍵字 (例如：專案名稱、日期)..." className="bg-black/50 border border-[#00fbff]/50 p-5 text-xl font-black text-[#00fbff] outline-none focus:border-white transition-all rounded-sm italic" />
+                                                <button type="submit" className="engage-btn p-5 text-lg uppercase font-black">開始掃描檔案 (Initialize Scan)</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-8">
+                                        {trainingData[activeTab === 'level1' ? 'social' : activeTab === 'level2' ? 'winkiss' : activeTab === 'level3' ? 'marq' : activeTab === 'level4' ? 'admin' : 'bonus'].map(item => <Card key={item.id} item={item} />)}
+                                    </div>
+                                )}
+                            </div>
+                        </main>
+                    </div>
 
-                const data = await response.json();
-                
-                // 新增普拉訊息
-                messages.innerHTML += `<div class="message-bubble pula-msg">${data.answer}</div>`;
-            } catch (error) {
-                messages.innerHTML += `<div class="message-bubble pula-msg" style="border-color:red; color:red;">通訊中斷：普拉暫時無法連線。</div>`;
-            } finally {
-                loading.classList.add('hidden');
-                messages.scrollTop = messages.scrollHeight;
-            }
-        }
-
-        // 支援 Enter 鍵送出
-        document.getElementById('chat-input')?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendChatMessage();
-        });
-
-        // 原有邏輯
-        window.setActiveTab = (id) => { state.activeTab = id; render(); };
-        window.toggleTask = (id, event) => {
-            if (!state.completedTasks.includes(id)) {
-                const star = document.createElement('div');
-                star.className = 'star-animation';
-                star.style.left = `${event.clientX}px`;
-                star.style.top = `${event.clientY}px`;
-                star.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-10 h-10 text-yellow-300 drop-shadow-[0_0_15px_gold]"><path d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" /></svg>`;
-                document.body.appendChild(star);
-                setTimeout(() => star.remove(), 800);
-                state.completedTasks.push(id);
-            } else {
-                state.completedTasks = state.completedTasks.filter(t => t !== id);
-            }
-            localStorage.setItem('arp_tasks', JSON.stringify(state.completedTasks));
-            render();
+                    <div className="fixed bottom-10 right-10 z-[100] flex flex-col items-end">
+                        {isChatOpen && (
+                            <div className="mb-6 w-80 md:w-96 h-[450px] bg-[#0d1127] border-2 border-[#00fbff] flex flex-col overflow-hidden shadow-[0_0_30px_rgba(0,251,255,0.3)] rounded-sm animate-in fade-in zoom-in duration-200">
+                                <div className="bg-black/50 p-4 border-b border-[#00fbff]/20 flex justify-between items-center text-[#00fbff] font-black italic text-xs">
+                                    <div className="flex items-center gap-2"><Icon name="bot" /> PULA_AI_SYSTEM</div>
+                                    <div className="flex items-center gap-3">
+                                        <button onClick={() => setIsSettingKey(!isSettingKey)} className="hover:text-white"><Icon name="settings" /></button>
+                                        <button onClick={() => setIsChatOpen(false)}><Icon name="x" /></button>
+                                    </div>
+                                </div>
+                                {isSettingKey ? (
+                                    <div className="p-6 flex flex-col gap-4 bg-[#161b33] flex-grow">
+                                        <p className="text-[10px] text-white font-bold uppercase">Settings: API Configuration</p>
+                                        <input type="password" value={tempKey} onChange={e => setTempKey(e.target.value)} placeholder="API KEY..." className="bg-black border border-[#00fbff]/30 p-3 text-xs text-[#00fbff] outline-none" />
+                                        <button onClick={() => { localStorage.setItem('arplanet_ai_key', tempKey); setIsSettingKey(false); }} className="engage-btn py-3">SAVE CONFIG</button>
+                                    </div>
+                                ) : (
+                                    <React.Fragment>
+                                        <div className="flex-grow p-5 overflow-y-auto space-y-4 chat-scrollbar bg-black/10">
+                                            {chatMessages.map((m, i) => (
+                                                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                                    <div className={`max-w-[85%] p-3 rounded-sm font-bold text-xs ${m.role === 'user' ? 'bg-[#00fbff] text-black shadow-[0_0_10px_#00fbff]' : 'bg-[#1a1f3c] text-slate-200'}`}>{m.content}</div>
+                                                </div>
+                                            ))}
+                                            <div ref={chatEndRef} />
+                                        </div>
+                                        <form onSubmit={handleSend} className="p-4 bg-black/50 border-t border-[#00fbff]/20 flex gap-2">
+                                            <input type="text" value={userInput} onChange={e => setUserInput(e.target.value)} placeholder="SEND SIGNAL..." className="flex-grow bg-black/20 border border-[#00fbff]/30 p-2 text-xs text-[#00fbff] outline-none" />
+                                            <button type="submit" className="engage-btn p-2 rounded-sm"><Icon name="rocket" /></button>
+                                        </form>
+                                    </React.Fragment>
+                                )}
+                            </div>
+                        )}
+                        <button onClick={() => setIsChatOpen(!isChatOpen)} className={`w-14 h-14 rounded-full border-2 border-[#00fbff] flex items-center justify-center transition-all hover:scale-110 shadow-[0_0_15px_#00fbff] ${isChatOpen ? 'bg-black text-white' : 'bg-[#0d1127] text-[#00fbff]'} relative overflow-hidden`}>
+                            {isChatOpen ? <Icon name="x" /> : <PulaGraphic className="w-10 h-10 absolute top-1" />}
+                        </button>
+                    </div>
+                </div>
+            );
         };
 
-        window.resetTraining = () => {
-            state.completedTasks = [];
-            localStorage.setItem('arp_tasks', '[]');
-            render();
-        };
-
-        document.getElementById('profile-card').onclick = () => {
-            document.getElementById('display-info').classList.add('hidden');
-            document.getElementById('edit-info').classList.remove('hidden');
-            document.getElementById('input-name').value = state.playerName;
-        };
-
-        document.getElementById('save-btn').onclick = (e) => {
-            e.stopPropagation();
-            state.playerName = document.getElementById('input-name').value.toUpperCase() || 'PLAYER 1';
-            const deptSelect = document.getElementById('input-dept');
-            state.playerDept = deptSelect.options[deptSelect.selectedIndex].value;
-            localStorage.setItem('arp_name', state.playerName);
-            localStorage.setItem('arp_dept', state.playerDept);
-            document.getElementById('display-info').classList.remove('hidden');
-            document.getElementById('edit-info').classList.add('hidden');
-            render();
-        };
-
-        render();
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
