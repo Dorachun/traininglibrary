@@ -61,7 +61,7 @@
             display: inline-block;
         }
 
-        .engage-btn:hover {
+        .engage-btn:hover:not(:disabled) {
             background-color: #ffffff;
             box-shadow: 0 0 12px #00ff00;
         }
@@ -74,7 +74,8 @@
         }
 
         .chat-scrollbar::-webkit-scrollbar { width: 4px; }
-        .chat-scrollbar::-webkit-scrollbar-thumb { background: #00fbff; }
+        .chat-scrollbar::-webkit-scrollbar-thumb { background: #00fbff; border-radius: 4px; }
+        .chat-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
         .animate-float { animation: float 3s ease-in-out infinite; }
         
         .tutorial-overlay {
@@ -126,6 +127,7 @@
                 'doc-color': <span className="text-2xl">📄</span>,
                 'film-color': <span className="text-2xl">🎬</span>,
                 'search-color': <span className="text-2xl">🔍</span>,
+                'bot-color': <span className="text-2xl">🤖</span>,
                 'rocket': <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09zM12 15l-3-3m8.5-4.5L12 12m5.5-4.5L21 3m-4.5 4.5l-3-3m0 0C11.3 2.3 8.2 2 6.5 3.5s-1.2 4.8.7 7l1.3 1.3 5.5-5.5-1.3-1.3z" />,
                 'search': <React.Fragment><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></React.Fragment>,
                 'star': <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />,
@@ -159,12 +161,10 @@
             const [onboardingStep, setOnboardingStep] = useState(0); 
             const [isInitialLoading, setIsInitialLoading] = useState(true);
 
-            const [isChatOpen, setIsChatOpen] = useState(false);
+            // AI Chat State
             const [chatMessages, setChatMessages] = useState([{ role: 'model', content: '你好！我是 Pula。已經為您更新了雲端圖書館的中文說明囉！' }]);
             const [userInput, setUserInput] = useState('');
             const [isAiLoading, setIsAiLoading] = useState(false);
-            const [isSettingKey, setIsSettingKey] = useState(false);
-            const [tempKey, setTempKey] = useState(localStorage.getItem('arplanet_ai_key') || "");
             const chatEndRef = useRef(null);
 
             const trainingData = {
@@ -244,8 +244,15 @@
                 setProgress(all.length ? Math.round((completedTasks.length / all.length) * 100) : 0);
             }, [completedTasks, playerName, playerDept, onboardingStep]);
 
+            // 自動滾動聊天室到底部
+            useEffect(() => {
+                if (activeTab === 'level-ai' && chatEndRef.current) {
+                    chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, [chatMessages, activeTab]);
+
             // ==========================================
-            // 這裡已經替換成串接真實後端 API 的版本
+            // 處理 AI 對話傳送
             // ==========================================
             const handleSend = async (e) => {
                 e.preventDefault();
@@ -345,7 +352,7 @@
                                         <div className="space-y-6 animate-in slide-in-from-right duration-300">
                                             <p className="text-xs font-black text-[#00fbff] uppercase tracking-widest">Identify Yourself:</p>
                                             <h2 className="text-2xl font-black italic">你的 Operator 代號（姓名）？</h2>
-                                            <input autoFocus type="text" value={playerName} onChange={e => setPlayerName(e.target.value.toUpperCase())} onKeyDown={e => e.key === 'Enter' && playerName && setOnboardingStep(2)} placeholder="ENTER CALLSIGN..." className="w-full bg-black/50 border-2 border-[#00fbff]/50 p-4 text-xl font-black text-[#00fbff] outline-none focus:border-white uppercase" />
+                                            <input autoFocus type="text" value={playerName} onChange={e => setPlayerName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing && playerName) setOnboardingStep(2); }} placeholder="ENTER CALLSIGN..." className="w-full bg-black/50 border-2 border-[#00fbff]/50 p-4 text-xl font-black text-[#00fbff] outline-none focus:border-white" />
                                             <button disabled={!playerName} onClick={() => setOnboardingStep(2)} className="engage-btn w-full py-3 disabled:grayscale">NEXT PHASE</button>
                                         </div>
                                     )}
@@ -371,10 +378,10 @@
                                         <div className="space-y-6 animate-in slide-in-from-right duration-300">
                                             <p className="text-xs font-black text-[#00fbff] uppercase tracking-widest">Tutorial Phase:</p>
                                             <h2 className="text-xl font-black italic">新手指南</h2>
-                                            <ul className="text-[11px] space-y-4 font-bold text-slate-300">
-                                                <li className="flex items-start gap-2"><span className="text-[#00ff00]">●</span> 點擊左側「星星」收集能量星辰。</li>
-                                                <li className="flex items-start gap-2"><span className="text-[#00fbff]">●</span> 使用「雲端圖書館」掃描共享硬碟。</li>
-                                                <li className="flex items-start gap-2"><span className="text-yellow-400">●</span> 點擊右下角「普拉」開啟 AI 對話。</li>
+                                            <ul className="text-sm md:text-base space-y-4 font-bold text-slate-300">
+                                                <li className="flex items-center gap-2"><span className="text-[#00ff00]">●</span> 點擊左側「星星」收集能量星辰。</li>
+                                                <li className="flex items-center gap-2"><span className="text-[#00fbff]">●</span> 使用「雲端圖書館」掃描共享硬碟。</li>
+                                                <li className="flex items-center gap-2"><span className="text-yellow-400">●</span> 點擊左側「AI 助理」與普拉進行 AI 對話。</li>
                                             </ul>
                                             <button onClick={() => setOnboardingStep(4)} className="engage-btn w-full py-4 text-xl">LOCKED AND LOADED</button>
                                         </div>
@@ -387,7 +394,7 @@
             };
 
             return (
-                <div className="min-h-screen">
+                <div className="min-h-screen flex flex-col md:flex-row">
                     {isInitialLoading && (
                         <div className="fixed inset-0 z-[300] bg-[#050a18] flex flex-col items-center justify-center space-y-4">
                             <div className="typing-text text-[#00fbff] font-black italic text-xl uppercase tracking-widest">System_Initializing_v2.0</div>
@@ -397,126 +404,124 @@
 
                     {onboardingStep < 4 && !isInitialLoading && <Onboarding />}
 
-                    <div className="flex flex-col md:flex-row">
-                        <aside className="w-full md:w-[320px] bg-[#0d1127] border-r border-[#00fbff]/20 flex flex-col p-8 sticky top-0 h-screen z-50">
-                            <div className="text-center mb-10">
-                                <div className="flex items-center justify-center gap-2 text-slate-400 mb-8 cursor-pointer hover:text-white" onClick={() => setOnboardingStep(1)}>
-                                    <div className="w-10 h-10 rounded-full bg-[#00fbff]/10 border border-[#00fbff]/40 flex items-center justify-center relative overflow-hidden"><PulaGraphic className="w-12 h-12 absolute top-1" /></div>
-                                    <span className="text-sm font-black tracking-widest uppercase">Operator: {playerName || '???'}</span>
-                                </div>
-                                <h1 className="portal-title text-4xl text-white mb-1 tracking-tighter">AR PLANET</h1>
-                                <div className="bg-black/40 border border-[#00fbff]/30 px-4 py-0.5 inline-block rounded-sm"><span className="text-[10px] font-black text-[#00fbff] tracking-[3px]">MISSION PORTAL</span></div>
+                    {/* Left Sidebar */}
+                    <aside className="w-full md:w-[320px] bg-[#0d1127] border-r border-[#00fbff]/20 flex flex-col p-8 sticky top-0 h-screen z-50 flex-shrink-0">
+                        <div className="text-center mb-10">
+                            <div className="flex items-center justify-center gap-2 text-slate-400 mb-8 cursor-pointer hover:text-white" onClick={() => setOnboardingStep(1)}>
+                                <div className="w-10 h-10 rounded-full bg-[#00fbff]/10 border border-[#00fbff]/40 flex items-center justify-center relative overflow-hidden"><PulaGraphic className="w-12 h-12 absolute top-1" /></div>
+                                <span className="text-sm font-black tracking-widest uppercase">Operator: {playerName || '???'}</span>
                             </div>
+                            <h1 className="portal-title text-4xl text-white mb-1 tracking-tighter">AR PLANET</h1>
+                            <div className="bg-black/40 border border-[#00fbff]/30 px-4 py-0.5 inline-block rounded-sm"><span className="text-[10px] font-black text-[#00fbff] tracking-[3px]">MISSION PORTAL</span></div>
+                        </div>
 
-                            <nav className="flex-grow overflow-y-auto chat-scrollbar pr-2">
-                                <LevelButton id="level1" icon="rocket-color" label="認識宇萌" sub="WORLD 1-1" />
-                                <LevelButton id="level2" icon="box-color" label="產品與素材" sub="WORLD 1-2" />
-                                <LevelButton id="level3" icon="map-color" label="XR 知識庫" sub="WORLD 1-3" />
-                                <LevelButton id="level4" icon="doc-color" label="行政與表單" sub="WORLD 1-4" />
-                                <LevelButton id="level5" icon="film-color" label="精選分享會" sub="BONUS" />
-                                <div className="mt-6 border-t border-[#00fbff]/10 pt-6"><LevelButton id="level-search" icon="search-color" label="雲端圖書館" sub="DATABASE SCAN" /></div>
-                            </nav>
-
-                            <div className="mt-auto pt-6">
-                                <div className="flex justify-between items-end mb-2">
-                                    <div className="flex items-center gap-2 text-xs font-black text-yellow-500"><Icon name="star" className="w-3 h-3 fill-yellow-500"/><span>x{completedTasks.length.toString().padStart(2,'0')}</span></div>
-                                    <span className="text-[#00fbff] text-xs font-black">{progress}%</span>
-                                </div>
-                                <div className="w-full h-3 bg-black/50 border border-[#00fbff]/20 p-0.5"><div className="h-full bg-[#00ff00] transition-all duration-1000 shadow-[0_0_10px_#00ff00]" style={{ width: `${progress}%` }}></div></div>
-                                <p className="text-[8px] text-center text-[#00fbff] font-black mt-2 tracking-widest opacity-60 uppercase">Core Power Stability</p>
+                        <nav className="flex-grow overflow-y-auto chat-scrollbar pr-2">
+                            <LevelButton id="level1" icon="rocket-color" label="認識宇萌" sub="WORLD 1-1" />
+                            <LevelButton id="level2" icon="box-color" label="產品與素材" sub="WORLD 1-2" />
+                            <LevelButton id="level3" icon="map-color" label="XR 知識庫" sub="WORLD 1-3" />
+                            <LevelButton id="level4" icon="doc-color" label="行政與表單" sub="WORLD 1-4" />
+                            <LevelButton id="level5" icon="film-color" label="精選分享會" sub="BONUS" />
+                            
+                            <div className="mt-6 border-t border-[#00fbff]/10 pt-6">
+                                <LevelButton id="level-search" icon="search-color" label="雲端圖書館" sub="DATABASE SCAN" />
+                                <LevelButton id="level-ai" icon="bot-color" label="AI 助理 Pula" sub="AI SYSTEM" />
                             </div>
-                        </aside>
+                        </nav>
 
-                        <main className="flex-grow p-10 md:p-14 relative">
-                            <div className="max-w-6xl mx-auto">
-                                <div className="flex flex-col md:flex-row gap-6 mb-16 items-stretch">
-                                    <div className="bg-[#161b33] border border-[#00fbff]/20 p-6 flex items-center gap-6 min-w-[300px]">
-                                        <div className="w-12 h-12 bg-blue-600/10 border border-blue-600/40 flex items-center justify-center relative overflow-hidden"><PulaGraphic className="w-14 h-14 absolute top-1" /></div>
+                        <div className="mt-auto pt-6 flex-shrink-0">
+                            <div className="flex justify-between items-end mb-2">
+                                <div className="flex items-center gap-2 text-xs font-black text-yellow-500"><Icon name="star" className="w-3 h-3 fill-yellow-500"/><span>x{completedTasks.length.toString().padStart(2,'0')}</span></div>
+                                <span className="text-[#00fbff] text-xs font-black">{progress}%</span>
+                            </div>
+                            <div className="w-full h-3 bg-black/50 border border-[#00fbff]/20 p-0.5"><div className="h-full bg-[#00ff00] transition-all duration-1000 shadow-[0_0_10px_#00ff00]" style={{ width: `${progress}%` }}></div></div>
+                            <p className="text-[8px] text-center text-[#00fbff] font-black mt-2 tracking-widest opacity-60 uppercase">Core Power Stability</p>
+                        </div>
+                    </aside>
+
+                    {/* Main Content Area */}
+                    <main className="flex-grow p-10 md:p-14 relative overflow-y-auto h-screen">
+                        <div className="max-w-6xl mx-auto">
+                            <div className="flex flex-col md:flex-row gap-6 mb-16 items-stretch">
+                                <div className="bg-[#161b33] border border-[#00fbff]/20 p-6 flex items-center gap-6 min-w-[300px]">
+                                    <div className="w-12 h-12 bg-blue-600/10 border border-blue-600/40 flex items-center justify-center relative overflow-hidden"><PulaGraphic className="w-14 h-14 absolute top-1" /></div>
+                                    <div>
+                                        <p className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Technical Status</p>
+                                        <h2 className="text-2xl font-black italic">{playerName || 'UNKNOWN'}</h2>
+                                        <p className="text-[10px] font-bold text-slate-500">{playerDept || 'Sector Pending'}</p>
+                                    </div>
+                                </div>
+                                <div className="flex-grow bg-[#0c122b] border-2 border-[#00fbff] border-l-8 p-6 relative">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 bg-black flex items-center justify-center font-black text-xl text-cyan-400 border border-cyan-400">!</div>
                                         <div>
-                                            <p className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Technical Status</p>
-                                            <h2 className="text-2xl font-black italic">{playerName || 'UNKNOWN'}</h2>
-                                            <p className="text-[10px] font-bold text-slate-500">{playerDept || 'Sector Pending'}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex-grow bg-[#0c122b] border-2 border-[#00fbff] border-l-8 p-6 relative">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 bg-black flex items-center justify-center font-black text-xl text-cyan-400 border border-cyan-400">!</div>
-                                            <div>
-                                                <div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div><span className="text-[10px] font-black text-cyan-400 tracking-widest uppercase">Incoming Message</span></div>
-                                                <p className="text-sm font-bold italic">點擊左側星星收集能量，完成新人太空任務！</p>
-                                            </div>
+                                            <div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div><span className="text-[10px] font-black text-cyan-400 tracking-widest uppercase">Incoming Message</span></div>
+                                            <p className="text-sm font-bold italic">點擊左側星星收集能量，完成新人太空任務！</p>
                                         </div>
                                     </div>
                                 </div>
-
-                                {activeTab === 'level-search' ? (
-                                    <div className="lg:col-span-2 bg-[#0d1127] border-2 border-[#00fbff] p-12 relative overflow-hidden rounded-sm">
-                                        <div className="absolute right-0 bottom-0 opacity-10 rotate-12 scale-150 pointer-events-none animate-float"><PulaGraphic className="w-64 h-64" /></div>
-                                        <div className="relative z-10">
-                                            <h3 className="text-4xl font-black italic text-[#00fbff] mb-2 uppercase tracking-tighter">Database Scanner</h3>
-                                            <p className="text-[#00fbff] font-bold text-lg mb-8 italic">宇萌數位科技 雲端圖書館</p>
-                                            
-                                            <div className="bg-[#161b33] border border-[#00fbff]/30 p-6 rounded mb-8 space-y-4">
-                                                <p className="text-sm font-bold text-slate-300 leading-relaxed">
-                                                    正在掃描宇萌元宇宙中的所有共享資料與內部文件庫...<br/>
-                                                    <span className="text-[#00fbff]">●</span> 請輸入關鍵字搜尋公司 Google 共用雲端硬碟。<br/>
-                                                    <span className="text-[#00ff00]">●</span> 搜尋結果將於新分頁開啟，請確保已登入公司 Google 帳號。
-                                                </p>
-                                            </div>
-
-                                            <form onSubmit={(e) => { e.preventDefault(); window.open(`https://drive.google.com/drive/search?q=${encodeURIComponent(searchTerm)}`, '_blank'); }} className="flex flex-col gap-6">
-                                                <input autoFocus value={searchTerm} onChange={e => setSearchTerm(e.target.value)} type="text" placeholder="請輸入搜尋關鍵字 (例如：專案名稱、日期)..." className="bg-black/50 border border-[#00fbff]/50 p-5 text-xl font-black text-[#00fbff] outline-none focus:border-white transition-all rounded-sm italic" />
-                                                <button type="submit" className="engage-btn p-5 text-lg uppercase font-black">開始掃描檔案 (Initialize Scan)</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-8">
-                                        {trainingData[activeTab === 'level1' ? 'social' : activeTab === 'level2' ? 'winkiss' : activeTab === 'level3' ? 'marq' : activeTab === 'level4' ? 'admin' : 'bonus'].map(item => <Card key={item.id} item={item} />)}
-                                    </div>
-                                )}
                             </div>
-                        </main>
-                    </div>
 
-                    <div className="fixed bottom-10 right-10 z-[100] flex flex-col items-end">
-                        {isChatOpen && (
-                            <div className="mb-6 w-80 md:w-96 h-[450px] bg-[#0d1127] border-2 border-[#00fbff] flex flex-col overflow-hidden shadow-[0_0_30px_rgba(0,251,255,0.3)] rounded-sm animate-in fade-in zoom-in duration-200">
-                                <div className="bg-black/50 p-4 border-b border-[#00fbff]/20 flex justify-between items-center text-[#00fbff] font-black italic text-xs">
-                                    <div className="flex items-center gap-2"><Icon name="bot" /> PULA_AI_SYSTEM</div>
-                                    <div className="flex items-center gap-3">
-                                        <button onClick={() => setIsSettingKey(!isSettingKey)} className="hover:text-white"><Icon name="settings" /></button>
-                                        <button onClick={() => setIsChatOpen(false)}><Icon name="x" /></button>
-                                    </div>
-                                </div>
-                                {isSettingKey ? (
-                                    <div className="p-6 flex flex-col gap-4 bg-[#161b33] flex-grow">
-                                        <p className="text-[10px] text-white font-bold uppercase">Settings: API Configuration</p>
-                                        <input type="password" value={tempKey} onChange={e => setTempKey(e.target.value)} placeholder="API KEY..." className="bg-black border border-[#00fbff]/30 p-3 text-xs text-[#00fbff] outline-none" />
-                                        <button onClick={() => { localStorage.setItem('arplanet_ai_key', tempKey); setIsSettingKey(false); }} className="engage-btn py-3">SAVE CONFIG</button>
-                                    </div>
-                                ) : (
-                                    <React.Fragment>
-                                        <div className="flex-grow p-5 overflow-y-auto space-y-4 chat-scrollbar bg-black/10">
-                                            {chatMessages.map((m, i) => (
-                                                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                                    <div className={`max-w-[85%] p-3 rounded-sm font-bold text-xs ${m.role === 'user' ? 'bg-[#00fbff] text-black shadow-[0_0_10px_#00fbff]' : 'bg-[#1a1f3c] text-slate-200'}`}>{m.content}</div>
-                                                </div>
-                                            ))}
-                                            <div ref={chatEndRef} />
+                            {/* Main Content Router Logic */}
+                            {activeTab === 'level-search' ? (
+                                <div className="lg:col-span-2 bg-[#0d1127] border-2 border-[#00fbff] p-12 relative overflow-hidden rounded-sm">
+                                    <div className="absolute right-0 bottom-0 opacity-10 rotate-12 scale-150 pointer-events-none animate-float"><PulaGraphic className="w-64 h-64" /></div>
+                                    <div className="relative z-10">
+                                        <h3 className="text-4xl font-black italic text-[#00fbff] mb-2 uppercase tracking-tighter">Database Scanner</h3>
+                                        <p className="text-[#00fbff] font-bold text-lg mb-8 italic">宇萌數位科技 雲端圖書館</p>
+                                        
+                                        <div className="bg-[#161b33] border border-[#00fbff]/30 p-6 rounded mb-8 space-y-4">
+                                            <p className="text-sm font-bold text-slate-300 leading-relaxed">
+                                                正在掃描宇萌元宇宙中的所有共享資料與內部文件庫...<br/>
+                                                <span className="text-[#00fbff]">●</span> 請輸入關鍵字搜尋公司 Google 共用雲端硬碟。<br/>
+                                                <span className="text-[#00ff00]">●</span> 搜尋結果將於新分頁開啟，請確保已登入公司 Google 帳號。
+                                            </p>
                                         </div>
-                                        <form onSubmit={handleSend} className="p-4 bg-black/50 border-t border-[#00fbff]/20 flex gap-2">
-                                            <input type="text" value={userInput} onChange={e => setUserInput(e.target.value)} placeholder="SEND SIGNAL..." className="flex-grow bg-black/20 border border-[#00fbff]/30 p-2 text-xs text-[#00fbff] outline-none" />
-                                            <button type="submit" className="engage-btn p-2 rounded-sm"><Icon name="rocket" /></button>
+
+                                        <form onSubmit={(e) => { e.preventDefault(); window.open(`https://drive.google.com/drive/search?q=${encodeURIComponent(searchTerm)}`, '_blank'); }} className="flex flex-col gap-6">
+                                            <input autoFocus value={searchTerm} onChange={e => setSearchTerm(e.target.value)} type="text" placeholder="請輸入搜尋關鍵字 (例如：專案名稱、日期)..." className="bg-black/50 border border-[#00fbff]/50 p-5 text-xl font-black text-[#00fbff] outline-none focus:border-white transition-all rounded-sm italic" />
+                                            <button type="submit" className="engage-btn p-5 text-lg uppercase font-black">開始掃描檔案 (Initialize Scan)</button>
                                         </form>
-                                    </React.Fragment>
-                                )}
-                            </div>
-                        )}
-                        <button onClick={() => setIsChatOpen(!isChatOpen)} className={`w-14 h-14 rounded-full border-2 border-[#00fbff] flex items-center justify-center transition-all hover:scale-110 shadow-[0_0_15px_#00fbff] ${isChatOpen ? 'bg-black text-white' : 'bg-[#0d1127] text-[#00fbff]'} relative overflow-hidden`}>
-                            {isChatOpen ? <Icon name="x" /> : <PulaGraphic className="w-10 h-10 absolute top-1" />}
-                        </button>
-                    </div>
+                                    </div>
+                                </div>
+                            ) : activeTab === 'level-ai' ? (
+                                <div className="lg:col-span-2 bg-[#0d1127] border-2 border-[#00fbff] flex flex-col relative overflow-hidden rounded-sm shadow-[0_0_30px_rgba(0,251,255,0.1)]" style={{ height: 'calc(100vh - 300px)', minHeight: '500px' }}>
+                                    {/* AI Chat Header */}
+                                    <div className="bg-[#161b33] p-5 border-b border-[#00fbff]/20 flex justify-between items-center text-[#00fbff] font-black italic text-xl z-10 relative shadow-md">
+                                        <div className="flex items-center gap-4">
+                                            <PulaGraphic className="w-10 h-10" /> 
+                                            <div>
+                                                <div>PULA_AI_SYSTEM</div>
+                                                <div className="text-xs font-bold text-slate-400 mt-1 tracking-widest not-italic">💡 這裡可以讓大家問關於宇萌的所有問題</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* AI Chat Body */}
+                                    <div className="absolute right-0 bottom-10 opacity-5 pointer-events-none animate-float"><PulaGraphic className="w-[400px] h-[400px]" /></div>
+                                    <div className="flex-grow p-8 overflow-y-auto space-y-6 chat-scrollbar bg-transparent z-10 relative">
+                                        {chatMessages.map((m, i) => (
+                                            <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                                <div className={`max-w-[85%] p-5 rounded-md font-bold text-base leading-relaxed whitespace-pre-wrap ${m.role === 'user' ? 'bg-[#00fbff] text-black shadow-[0_0_15px_rgba(0,251,255,0.4)]' : 'bg-[#1a1f3c] text-[#00fbff] border border-[#00fbff]/30 shadow-sm'}`}>
+                                                    {m.content}
+                                                </div>
+                                            </div>
+                                        ))}
+                                        <div ref={chatEndRef} />
+                                    </div>
+                                    <form onSubmit={handleSend} className="p-5 bg-[#161b33] border-t border-[#00fbff]/20 flex gap-4 z-10 relative shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
+                                        <input autoFocus type="text" value={userInput} onChange={e => setUserInput(e.target.value)} placeholder="ENTER SIGNAL..." className="flex-grow bg-black/40 border border-[#00fbff]/50 p-5 text-lg text-[#00fbff] outline-none focus:border-white transition-colors rounded-sm italic" />
+                                        <button type="submit" disabled={isAiLoading} className="engage-btn px-10 rounded-sm disabled:opacity-50 flex items-center justify-center">
+                                            {isAiLoading ? <span className="animate-pulse">TRANSMITTING...</span> : <Icon name="rocket" className="w-8 h-8" />}
+                                        </button>
+                                    </form>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-8">
+                                    {trainingData[activeTab === 'level1' ? 'social' : activeTab === 'level2' ? 'winkiss' : activeTab === 'level3' ? 'marq' : activeTab === 'level4' ? 'admin' : 'bonus'].map(item => <Card key={item.id} item={item} />)}
+                                </div>
+                            )}
+                        </div>
+                    </main>
                 </div>
             );
         };
