@@ -13,6 +13,8 @@
         @keyframes neonPulse { 0%, 100% { border-color: #00fbff; box-shadow: 0 0 5px #00fbff; } 50% { border-color: #0088ff; box-shadow: 0 0 15px #0088ff; } }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         @keyframes typing { from { width: 0 } to { width: 100% } }
+        @keyframes working { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes bounce-small { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
         
         body { 
             background-color: #050a18; 
@@ -73,28 +75,63 @@
             text-shadow: 0 0 10px #00fbff;
         }
 
-        .chat-scrollbar::-webkit-scrollbar { width: 4px; }
+        .chat-scrollbar::-webkit-scrollbar { width: 6px; }
         .chat-scrollbar::-webkit-scrollbar-thumb { background: #00fbff; border-radius: 4px; }
         .chat-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-        .animate-float { animation: float 3s ease-in-out infinite; }
-        
-        .tutorial-overlay {
-            background-color: rgba(5, 10, 24, 0.98);
-            backdrop-filter: blur(15px);
+
+        /* === 小精靈 (Pac-Man) 與地圖特效 === */
+        .retro-grid-bg {
+            background-color: #030712;
+            background-image: 
+                linear-gradient(rgba(0, 251, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 251, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: center;
         }
         
-        .typing-text {
-            overflow: hidden;
-            border-right: 2px solid #00fbff;
-            white-space: nowrap;
-            letter-spacing: 0.15em;
-            animation: typing 1s steps(20, end);
+        @keyframes chomp {
+            0%, 100% { clip-path: polygon(100% 74%, 44% 48%, 100% 21%, 100% 0, 0 0, 0 100%, 100% 100%); }
+            50% { clip-path: polygon(100% 50%, 44% 48%, 100% 50%, 100% 0, 0 0, 0 100%, 100% 100%); }
+        }
+        
+        .pacman-body {
+            width: 100%;
+            height: 100%;
+            background: #eab308;
+            border-radius: 50%;
+            animation: chomp 0.3s infinite;
+            box-shadow: 0 0 15px rgba(234, 179, 8, 0.8);
         }
 
-        select option {
-            background-color: #0d1127;
-            color: #00fbff;
+        /* === 同事名牌 (橫向科技膠囊) === */
+        .employee-badge {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
         }
+        
+        .colleague-avatar-large {
+            width: 100px;
+            height: 100px;
+            border-radius: 20px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 4px solid currentColor;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: inset 0 0 20px rgba(255,255,255,0.2), 0 0 20px currentColor;
+        }
+
+        /* 迷宮發光牆壁 */
+        .maze-wall {
+            fill: none;
+            stroke-width: 3;
+            filter: drop-shadow(0 0 5px currentColor);
+            rx: 8;
+        }
+
+        select option { background-color: #0d1127; color: #00fbff; }
     </style>
 </head>
 <body>
@@ -121,37 +158,332 @@
 
         const Icon = ({ name, className = "w-4 h-4" }) => {
             const icons = {
-                'rocket-color': <span className="text-2xl">🚀</span>,
-                'box-color': <span className="text-2xl">📦</span>,
-                'map-color': <span className="text-2xl">🌌</span>,
-                'doc-color': <span className="text-2xl">📄</span>,
-                'film-color': <span className="text-2xl">🎬</span>,
+                'culture-color': <span className="text-2xl">🌍</span>,
+                'game-color': <span className="text-2xl">🎮</span>,
+                'admin-color': <span className="text-2xl">🎒</span>,
+                'xr-color': <span className="text-2xl">🧠</span>,
+                'workflow-color': <span className="text-2xl">🔄</span>,
+                'bonus-color': <span className="text-2xl">🎬</span>,
                 'search-color': <span className="text-2xl">🔍</span>,
                 'bot-color': <span className="text-2xl">🤖</span>,
                 'rocket': <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09zM12 15l-3-3m8.5-4.5L12 12m5.5-4.5L21 3m-4.5 4.5l-3-3m0 0C11.3 2.3 8.2 2 6.5 3.5s-1.2 4.8.7 7l1.3 1.3 5.5-5.5-1.3-1.3z" />,
                 'search': <React.Fragment><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></React.Fragment>,
                 'star': <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />,
-                'check': <polyline points="20 6 9 17 4 12" />,
-                'wifi': <React.Fragment><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><line x1="12" y1="20" x2="12.01" y2="20" /></React.Fragment>,
-                'bot': <React.Fragment><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></React.Fragment>,
-                'x': <React.Fragment><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></React.Fragment>,
-                'settings': <React.Fragment><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></React.Fragment>,
-                'info': <><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></>,
-                'hard-drive': <React.Fragment><rect x="2" y="14" width="20" height="8" rx="2" /><path d="M2 14L4.5 4h15L22 14" /></React.Fragment>,
-                'user': <><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>
             };
-
             if (name.includes('-color')) return icons[name];
+            return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name] || <circle cx="12" cy="12" r="10" />}</svg>;
+        };
+
+        // ==========================================
+        // 靜態資料庫：所有訓練與教材文件
+        // (移到外面以節省 React 渲染效能)
+        // ==========================================
+        const trainingData = {
+            culture: [
+                { id: 'c1', name: 'CEO 歡迎信與公司願景', url: '#', type: 'DOC', memo: '認識宇萌創立初衷' },
+                { id: 'c2', name: '宇萌專屬黑話/術語表', url: '#', type: 'LINK', memo: '聽懂大家在講什麼' },
+                { id: 's1', name: '官網精選案例', url: 'https://www.arplanet.com.tw/', type: 'WEB', memo: '認識公司官網案例' },
+                { id: 's2', name: '公司 Youtube 頻道', url: 'https://www.youtube.com/user/arplanet2', type: 'VIDEO', memo: '追蹤與訂閱' },
+                { id: 's3', name: 'FB (下一秒製造所)', url: 'https://www.facebook.com/arplanet1/', type: 'SOCIAL', memo: '按讚掌握動態' },
+                { id: 's4', name: 'IG (下一秒製造所)', url: 'https://www.instagram.com/arplanet.tw/', type: 'SOCIAL', memo: '追蹤視覺饗宴' },
+                { id: 's5', name: 'Mew_IG', url: 'https://www.instagram.com/mew_mew_xr/', type: 'SOCIAL', memo: 'Metaverse Life' }
+            ],
+            admin: [
+                { id: 'a1', name: '人事出勤系統 (打卡)', url: 'https://hrm.mavohr.com/tube', type: 'TOOL', memo: '用於打卡、請假' },
+                { id: 'a2', name: '同事介紹/座位表', url: 'https://docs.google.com/spreadsheets/d/1tMFIG21Pa0Wwel7e4bdYnmOxrZyFmVkmu7vr5iXsWs/edit', type: 'LINK', memo: '認識公司部門' },
+                { id: 'a3', name: '會議室租用系統', url: 'http://bmr.isi999.com.tw/', type: 'LINK', memo: 'ID: 29151337 / PW: arplanet' }
+            ],
+            xr: [
+                { id: 'x1', name: 'XR 基礎概論', url: 'https://docs.google.com/presentation/d/10ZHNwKBMwFfvRd-Nyolz9C-NEe6Eo18k/edit', type: 'PPT', memo: 'PPT共63頁' },
+                { id: 'x2', name: 'AR 擴增實境創意案例', url: 'https://docs.google.com/presentation/d/1jOTWDAadgB3Bbr8oDue-Isy4BJUPi6S44zzWvIhXciA/edit', type: 'PPT', memo: 'PPT共61頁' },
+                { id: 'x3', name: 'VR 體感學習簡報', url: 'https://docs.google.com/presentation/d/110zTOF70xm9oQKCxwiHZw_rxzP1IzEtO/edit', type: 'PPT', memo: 'PPT共56頁' },
+                { id: 'w1', name: '1-1【winkiss】產品介紹', url: 'https://docs.google.com/presentation/d/1KBeDulhzx6rJR-VmOA7E2OtreP6dCQul/edit', type: 'PPT', memo: 'PPT共34頁' },
+                { id: 'w2', name: '2-1【winkiss】產品影片', url: 'https://youtu.be/gtaod70-6rM', type: 'VIDEO', memo: '影片21分鐘' },
+                { id: 'm1', name: '認識 marq+', url: 'https://drive.google.com/drive/folders/1F1Z5eCBnM-Xn2R8q4-kNllmsqy20VR2c', type: 'PPT', memo: 'PPT共61頁' },
+                { id: 'm2', name: 'marq+ 後台解說影片', url: 'https://youtu.be/8On2YvcZV60', type: 'VIDEO', memo: '影片33分鐘' }
+            ],
+            workflow: [
+                { id: 'wf1', name: '專案生命週期概覽', url: '#', type: 'FLOW', memo: '從接案到結案流程' },
+                { id: 'a4', name: '提案技巧範本', url: 'https://docs.google.com/spreadsheets/d/1F0wObkb_UVluk3zTk4pXh3bA4A6jVICMzyOhCjH3Ng0/edit', type: 'LINK', memo: '業務/企劃必備' },
+                { id: 'a5', name: '設計部專案時間表', url: 'https://docs.google.com/spreadsheets/d/1YyudKr1RWwz2HPtPfIXox11-rd5p52TW6R6aC0aAHBI/edit', type: 'FORM', memo: '美術需求填寫' }
+            ],
+            bonus: [
+                { id: 'v1', name: '2021 XR 行銷技法', url: 'https://www.youtube.com/watch?v=2Rn9fu1WSD8', type: 'SEMINAR', memo: '了解 XR 行銷' },
+                { id: 'v2', name: 'WebAR 應用與技術解析', url: 'https://youtu.be/cPTurF6GFF4', type: 'SEMINAR', memo: 'WebAR 解析' },
+                { id: 'v3', name: 'AI 工作術營運中心', url: 'https://youtu.be/r2cCgLyFODE', type: 'SEMINAR', memo: 'AI 工具應用' }
+            ]
+        };
+
+        // ==========================================
+        // Pac-Man RPG 地圖組件 - 終極版 (無重疊排版、完整走道點點、科技方塊頭像)
+        // ==========================================
+        const RPGMap = ({ playerName }) => {
+            const [playerPos, setPlayerPos] = useState({ x: 6, y: 98 });
+            const [playerAngle, setPlayerAngle] = useState(0); 
+            const [activeEmp, setActiveEmp] = useState(null);
+            const [dots, setDots] = useState([]);
+            const [score, setScore] = useState(0);
+
+            // 完美對齊真實座位的員工資料
+            const employees = [
+                // === 執行長與總經理 (Top Right) ===
+                { id: '2', name: '葉慶元', enName: 'gary_yeh', dept: '總管理處', title: '總經理', x: 80, y: 12, icon: '👔', color: 'text-red-500', dialogue: ["你好啊，新夥伴！👋", "我是總經理 Gary，負責落實公司策略方向與跨部門協調。", "有任何大方向的問題，都歡迎來找我聊聊！"] },
+                { id: '1', name: '白璧珍', enName: 'Jennifer', dept: '執行長室', title: '執行長', x: 90, y: 12, icon: '👑', color: 'text-red-600', dialogue: ["哈囉！歡迎來到宇萌！🌟", "我是執行長，引領公司的願景與XR發展方向。", "你知道宇萌的吉祥物是誰嗎？沒錯，就是那隻可愛的外星生物『普拉 (Pula)』喔！🚀"] },
+                
+                // === 技術中心 (黃區 - x: 12, 22, 32, 42 | y: 28, 40, 52, 64, 76, 88) ===
+                { id: '8', name: '許承庭', enName: 'Chuck_Sheu', dept: '技術中心', title: 'SRE 工程師', x: 12, y: 40, icon: '👨‍💻', color: 'text-blue-500', dialogue: ["安安！我是 Chuck！", "負責 SRE 服務可靠度，確保系統不會在半夜崩潰的守護者🛡️"] },
+                { id: '6', name: '陳凱嶸', enName: 'kaijung_chen', dept: '技術中心', title: '資深經理', x: 22, y: 28, icon: '👨‍💻', color: 'text-blue-600', dialogue: ["嗨！我是凱嶸！👨‍💻", "我是技術中心的負責人，統籌系統架構與技術開發。", "工程師團隊超強大，有技術奇思妙想隨時歡迎討論！✨"] },
+                { id: '31', name: '呂坤陽', enName: 'Augus_lu', dept: '技術中心', title: 'Unity設計師', x: 32, y: 28, icon: '👨‍💻', color: 'text-cyan-500', dialogue: ["嗨！我是 Augus！", "主要職掌 Unity 開發，讓虛擬物件在現實中活起來！🌍"] },
+                
+                { id: '3', name: '徐立森', enName: 'Leeson', dept: '技術中心', title: '副理', x: 12, y: 52, icon: '👨‍💻', color: 'text-blue-400', dialogue: ["歡迎！我是 Leeson ☕", "主導 Web 技術與後端資料庫設計。網站有 Bug 找我準沒錯！"] },
+                { id: '15', name: '趙崇睿', enName: 'Aries_Chao', dept: '技術中心', title: 'Android工程師', x: 22, y: 40, icon: '👨‍💻', color: 'text-sky-500', dialogue: ["嗨！我是 Aries 📱", "負責 Android App 開發，各種底層串接與效能調校都交給我！"] },
+                { id: '13', name: '高啟鈞', enName: 'Crobo_Kao', dept: '技術中心', title: '主任', x: 32, y: 40, icon: '👨‍💻', color: 'text-cyan-400', dialogue: ["你好！我是 Crobo 🚀", "帶領 3D Rendering 團隊開發沉浸式專案！想看極致 3D 視覺找我們！"] },
+                { id: '9', name: '黃柏閔', enName: 'Bomin_Huang', dept: '技術中心', title: 'Unity設計師', x: 42, y: 40, icon: '👨‍💻', color: 'text-sky-400', dialogue: ["安安！我是 Bomin！", "把複雜互動邏輯化為順暢遊戲體驗是我的專長 🕹️"] },
+
+                { id: '22', name: '莊浩銘', enName: 'Michael_chua', dept: '技術中心', title: 'Unity設計師', x: 12, y: 64, icon: '👨‍💻', color: 'text-blue-300', dialogue: ["嗨！我是 Michael！🎮", "負責 Unity 程式設計，把平面稿變成酷炫互動體驗！"] },
+                { id: '16', name: '顏維德', enName: 'Wade_Yen', dept: '技術中心', title: 'PHP後端', x: 22, y: 52, icon: '👨‍💻', color: 'text-sky-300', dialogue: ["哈囉！我是 Wade！", "負責 PHP 後端系統，為前端提供穩定的 API 彈藥庫！🔫"] },
+                { id: '25', name: '廖冠程', enName: 'Danny_liao', dept: '技術中心', title: 'Unity設計師', x: 32, y: 52, icon: '👨‍💻', color: 'text-cyan-300', dialogue: ["哈囉！我是 Danny！", "負責各類好玩的 XR 互動專案，寫 Code 是我的浪漫 💻✨"] },
+                { id: '18', name: '彭進業', enName: 'Chinyeh_Pen', dept: '技術中心', title: 'AI演算法', x: 42, y: 52, icon: '👨‍💻', color: 'text-sky-300', dialogue: ["你好！我是 Chinyeh 🤖", "負責核心演算法與 AI 前瞻技術研發。有 AI 奇思妙想歡迎討論！"] },
+
+                { id: '21', name: '闕均丞', enName: 'JunCheng_Qu', dept: '技術中心', title: 'Unity設計師', x: 12, y: 76, icon: '👨‍💻', color: 'text-blue-400', dialogue: ["哈囉！我是均丞！", "負責實作 AR/VR 互動邏輯。寫 Code 打結時記得去補充咖啡因喔！☕"] },
+                { id: '39', name: '趙子瑄', enName: 'Emory_chao', dept: '技術中心', title: '前端工程師', x: 22, y: 64, icon: '👩‍💻', color: 'text-indigo-400', dialogue: ["嗨～我是 Emory 👩‍💻", "負責跨平台網頁前端，把設計圖變精美網頁是我的專長！✨"] },
+                { id: '24', name: '呂浩邑', enName: 'Ray_lu', dept: '技術中心', title: '視窗工程師', x: 42, y: 64, icon: '👨‍💻', color: 'text-cyan-400', dialogue: ["嗨，我是 Ray！", "負責視窗應用程式與前端相關技術，很高興認識你！"] },
+
+                { id: '26', name: '張慧欣', enName: 'Cindy_Chang', dept: '技術中心', title: 'Tech Art', x: 22, y: 76, icon: '👩‍💻', color: 'text-indigo-400', dialogue: ["你好！我是 Cindy 🎨", "我是遊走在美術與程式間的技術美術！負責 Unreal 引擎特效！"] },
+                { id: '28', name: '林渝珊', enName: 'Olivia_Lin', dept: '技術中心', title: '前端工程師', x: 22, y: 88, icon: '👩‍💻', color: 'text-indigo-300', dialogue: ["哈囉！我是 Olivia！", "致力於給使用者最滑順的 WebAR 網頁體驗喔！🌐"] },
+                { id: '20', name: '陶靖宇', enName: 'Queena_Tao', dept: '技術中心', title: '前端工程師', x: 32, y: 88, icon: '👩‍💻', color: 'text-indigo-300', dialogue: ["嗨！我是 Queena 👩‍💻", "前端團隊的一員，切版寫 Code 樣樣來，歡迎切磋！"] },
+
+                // === 營運中心與協會 (綠區 - x: 53, 61, 69 | y: 28, 40, 52, 64, 76) ===
+                { id: '7', name: '江詠蕙', enName: 'Sophy_Chian', dept: '營運中心', title: '經理', x: 53, y: 28, icon: '👩‍💼', color: 'text-green-500', dialogue: ["哈囉！我是 Sophy 經理 💼", "負責商務與專案管理。專案卡關或需要 marq+ 帳號找我就對了！"] },
+                { id: '23', name: '邱詩庭', enName: 'Vera_chiu', dept: 'XRA協會', title: '執行秘書', x: 61, y: 28, icon: '👩‍💼', color: 'text-emerald-500', dialogue: ["你好！我是 Vera 🏛️", "XRA 協會負責政府關係與會員招募！目標是把 XR 推向全台！"] },
+                { id: 'k1', name: '王鳴謙', enName: 'Ken', dept: '營運中心', title: '專案企劃', x: 69, y: 28, icon: '👨‍💼', color: 'text-teal-500', dialogue: ["嗨，我是 Ken！", "企劃生存法則就是細心與耐心，很高興你加入！🚀"] },
+
+                { id: '29', name: '朱怡蓁', enName: 'Joyce_chu', dept: '營運中心', title: '專案企劃', x: 53, y: 40, icon: '👩‍💼', color: 'text-green-400', dialogue: ["嗨～我是 Joyce！", "負責把客戶需求轉化為企劃，是工程與設計間的橋樑 🌉"] },
+                { id: '33', name: '蔡文媛', enName: 'Jessic_Tsai', dept: '營運中心', title: '專案企劃', x: 61, y: 40, icon: '👩‍💼', color: 'text-emerald-400', dialogue: ["哈囉！我是 Jessica 📝", "企劃日常就是畫 Wireframe 跟無止盡的溝通！加油！"] },
+                { id: '11', name: '吳冠緯', enName: 'Ryan_Wu', dept: '營運中心', title: '行銷專員', x: 69, y: 40, icon: '👨‍💼', color: 'text-teal-400', dialogue: ["哈囉！我是 Ryan 📣", "負責把公司超酷產品行銷出去，FB/IG 活動都跟我有關喔！"] },
+
+                { id: '14', name: '曹益維', enName: 'Bael_Tsao', dept: '營運中心', title: '主任', x: 61, y: 52, icon: '👨‍💼', color: 'text-green-500', dialogue: ["嗨！我是 Bael 📈", "負責市場戰略與產品營運。想討論商業模式來找我！"] },
+                { id: '35', name: '林浩毅', enName: 'Howie_Lin', dept: '營運中心', title: '營運管理師', x: 69, y: 52, icon: '👨‍💼', color: 'text-emerald-500', dialogue: ["你好！我是 Howie！", "負責各項營運數據追蹤，維持專案健康度 📊"] },
+
+                { id: '37', name: '林郁翔', enName: 'Alan_Lin', dept: '營運中心', title: '專案企劃', x: 69, y: 64, icon: '👨‍💼', color: 'text-teal-500', dialogue: ["嗨！我是 Alan 📝", "有任何關於提案或規格的問題都可以互相討論喔！"] },
+                { id: '30', name: '蔡程淵', enName: 'Brian_tsai', dept: '營運中心', title: '專案企劃', x: 69, y: 76, icon: '👨‍💼', color: 'text-teal-400', dialogue: ["安安！我是 Brian！", "負責對接客戶需求確保專案如期上線！🔥"] },
+
+                // === 創意中心 (藍區 - x: 80, 87, 94 | y: 40, 52, 64) ===
+                { id: '38', name: '陳致宇', enName: 'Brant_chen', dept: '創意中心', title: 'UIUX設計師', x: 80, y: 40, icon: '👨‍🎨', color: 'text-purple-500', dialogue: ["哈囉！我是 Brant 📱", "負責 UI/UX 設計，把系統變得直覺好用是我的目標！"] },
+                { id: '27', name: '廖俐瑄', enName: 'Sally_Liao', dept: '創意中心', title: '平面設計師', x: 87, y: 40, icon: '👩‍🎨', color: 'text-fuchsia-500', dialogue: ["嗨～我是 Sally 🎨", "負責平面視覺。宇萌的顏值擔當就是我們創意中心啦！✨"] },
+                { id: '4', name: '張琳樺', enName: 'Frank_chang', dept: '創意中心', title: '資深經理', x: 94, y: 40, icon: '👨‍🎨', color: 'text-pink-500', dialogue: ["歡迎！我是 Frank 經理 🖌️", "帶領 2D 與 UIUX 團隊。美術風格拿不定主意隨時來找我！"] },
+                
+                { id: '34', name: '莊承諺', enName: 'Landja_Chua', dept: '創意中心', title: '影片剪輯師', x: 87, y: 52, icon: '👨‍🎨', color: 'text-fuchsia-400', dialogue: ["安安！我是 Landja 🎬", "各種超炫特效都是我剪的，歡迎訂閱 Youtube 頻道喔！"] },
+                { id: '17', name: '蔡佳蓉', enName: 'Carol_Tsai', dept: '創意中心', title: '3D動畫師', x: 94, y: 52, icon: '👩‍🎨', color: 'text-pink-400', dialogue: ["嗨！我是 Carol 🧚‍♀️", "負責讓 3D 角色生動起來！跳躍或跳舞動畫都難不倒我！"] },
+                
+                { id: '32', name: '郭靜靜', enName: 'Carol_Kuo', dept: '創意中心', title: '影片剪輯師', x: 80, y: 64, icon: '👩‍🎨', color: 'text-purple-400', dialogue: ["哈囉！我是 靜靜 🎥", "專門把活動紀錄與產品亮點剪成最吸引人的精華！"] },
+                { id: '5', name: '黃志育', enName: 'Nick_huang', dept: '創意中心', title: '副理', x: 87, y: 64, icon: '👨‍🎨', color: 'text-fuchsia-500', dialogue: ["嗨！我是 Nick 副理 🧊", "負責 XR 媒體中心與 3D 模型製作。打造逼真元宇宙交給我們！"] },
+                { id: '12', name: '蕭瑞澤', enName: 'Kyle_Hsiao', dept: '創意中心', title: '3D動畫師', x: 94, y: 64, icon: '👨‍🎨', color: 'text-pink-500', dialogue: ["你好，我是 Kyle 🐉", "致力於賦予每個虛擬 3D 角色最真實的靈魂！"] },
+
+                // === 管理中心 (316室 - x: 80, 92 | y: 82, 92) ===
+                { id: '36', name: '蔡燕芬', enName: 'Ann_Tsai', dept: '管理中心', title: '財務會計', x: 80, y: 82, icon: '👩‍💼', color: 'text-yellow-500', dialogue: ["哈囉！我是 Ann 💰", "負責財務規劃，所有請款報帳流程都可以來 316 室問我喔！"] },
+                { id: '19', name: '陳怡君', enName: 'Dora_Chen', dept: '管理中心', title: '主任', x: 92, y: 82, icon: '👩‍💼', color: 'text-yellow-500', dialogue: ["歡迎！我是 Dora 主任 🏢", "管理中心統籌人才發展與行政。遇到跨部門協調問題會協助你！"] },
+                { id: '40', name: '陳禹晴', enName: 'Trista_chen', dept: '管理中心', title: '人資專員', x: 80, y: 92, icon: '👩‍💼', color: 'text-yellow-400', dialogue: ["嗨～我是 Trista 📝", "負責出勤記錄與勞健保。剛報到有不懂的流程隨時敲我！❤️"] },
+                { id: '10', name: '潘禹珺', enName: 'Yujun_Pan', dept: '管理中心', title: '行政總務', x: 92, y: 92, icon: '👩‍💼', color: 'text-yellow-400', dialogue: ["你好！我是 禹珺 🗂️", "負責行政總務，文具沒了、冷氣不冷找我就對了！"] }
+            ];
+
+            // 初始化點點 (Pellets) 路徑迷宮
+            useEffect(() => {
+                let initialDots = [];
+                let did = 0;
+                const addDot = (x, y) => initialDots.push({ id: did++, x, y, eaten: false });
+
+                // 橫向主要走道
+                for(let x=6; x<=96; x+=2) addDot(x, 6);   // 最上方
+                for(let x=6; x<=96; x+=2) addDot(x, 21);  // 中上
+                for(let x=6; x<=96; x+=2) addDot(x, 98);  // 最下方
+
+                // 橫向內部走道 (穿梭於座位間)
+                [34, 46, 58, 70, 82].forEach(y => { for(let x=6; x<=48; x+=2) addDot(x, y); });
+                [34, 46, 58, 70].forEach(y => { for(let x=48; x<=76; x+=2) addDot(x, y); });
+                [34, 46, 58, 70].forEach(y => { for(let x=76; x<=96; x+=2) addDot(x, y); });
+
+                // 直向主要走道
+                for(let y=6; y<=98; y+=2.5) addDot(6, y);   
+                for(let y=21; y<=98; y+=2.5) addDot(48, y); 
+                for(let y=21; y<=98; y+=2.5) addDot(76, y); 
+                for(let y=6; y<=98; y+=2.5) addDot(96, y);  
+
+                // 直向內部走道
+                [17, 27, 37].forEach(x => { for(let y=21; y<=98; y+=2.5) addDot(x, y); });
+                [57, 65].forEach(x => { for(let y=21; y<=82; y+=2.5) addDot(x, y); });
+                [85, 91].forEach(x => { for(let y=34; y<=98; y+=2.5) addDot(x, y); });
+
+                setDots(initialDots);
+            }, []);
+
+            // 處理鍵盤移動與吃豆豆邏輯
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    const step = 2; 
+                    setPlayerPos(prev => {
+                        let { x, y } = prev;
+                        let newAngle = playerAngle;
+                        
+                        if (e.key === 'ArrowUp' || e.key === 'w') { y = Math.max(3, y - step); newAngle = -90; }
+                        if (e.key === 'ArrowDown' || e.key === 's') { y = Math.min(98, y + step); newAngle = 90; }
+                        if (e.key === 'ArrowLeft' || e.key === 'a') { x = Math.max(3, x - step); newAngle = 180; }
+                        if (e.key === 'ArrowRight' || e.key === 'd') { x = Math.min(98, x + step); newAngle = 0; }
+                        
+                        setPlayerAngle(newAngle);
+
+                        setDots(prevDots => {
+                            let ate = false;
+                            const next = prevDots.map(d => {
+                                if (!d.eaten && Math.hypot(d.x - x, d.y - y) < 3) {
+                                    ate = true;
+                                    return { ...d, eaten: true };
+                                }
+                                return d;
+                            });
+                            if (ate) setScore(s => s + 10);
+                            return next;
+                        });
+
+                        return { x, y };
+                    });
+                };
+                window.addEventListener('keydown', handleKeyDown);
+                return () => window.removeEventListener('keydown', handleKeyDown);
+            }, [playerAngle]);
+
+            // 偵測是否靠近座位 (觸發對話)
+            useEffect(() => {
+                let nearest = null;
+                let minDist = 5.5; // 觸發半徑，改為橫向膠囊後稍微放大感應區
+                employees.forEach(emp => {
+                    const dist = Math.hypot(emp.x - playerPos.x, emp.y - playerPos.y);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        nearest = emp;
+                    }
+                });
+                setActiveEmp(nearest);
+            }, [playerPos]);
+
+            // 繪製部門外框 (讓發光牆壁避開走道)
+            const SectorOutlines = () => (
+                <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
+                    <rect x="71%" y="7%" width="22%" height="10%" fill="none" className="maze-wall text-red-500" strokeDasharray="5,5" opacity="0.8"/>
+                    <text x="73%" y="15%" fill="#ef4444" fontSize="16" fontWeight="bold" opacity="0.8">執行長與總經理室</text>
+                    
+                    <rect x="9%" y="24%" width="37%" height="68%" fill="none" className="maze-wall text-yellow-500" opacity="0.4"/>
+                    <text x="11%" y="90%" fill="#eab308" fontSize="24" fontWeight="900" opacity="0.5">技術中心</text>
+
+                    <rect x="50%" y="24%" width="24%" height="56%" fill="none" className="maze-wall text-green-500" opacity="0.4"/>
+                    <text x="52%" y="78%" fill="#22c55e" fontSize="24" fontWeight="900" opacity="0.5">營運中心與協會</text>
+
+                    <rect x="77%" y="36%" width="19%" height="32%" fill="none" className="maze-wall text-blue-500" opacity="0.4"/>
+                    <text x="79%" y="66%" fill="#3b82f6" fontSize="20" fontWeight="900" opacity="0.5">創意中心</text>
+
+                    <rect x="77%" y="78%" width="19%" height="18%" fill="none" className="maze-wall text-cyan-500" strokeDasharray="5,5" opacity="0.4"/>
+                    <text x="79%" y="94%" fill="#06b6d4" fontSize="16" fontWeight="900" opacity="0.6">管理中心 (316室)</text>
+                </svg>
+            );
 
             return (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    {icons[name] || <circle cx="12" cy="12" r="10" />}
-                </svg>
+                <div className="w-full border-4 border-[#00fbff] rounded-lg bg-black flex flex-col shadow-[0_0_30px_rgba(0,251,255,0.3)] h-[850px] overflow-hidden">
+                    {/* Header Score Board */}
+                    <div className="bg-black border-b-2 border-[#00fbff] text-white px-6 py-4 font-black flex justify-between items-center z-20">
+                        <div className="flex items-center gap-4">
+                            <span className="text-[#00fbff] text-2xl">SCORE</span>
+                            <span className="text-yellow-400 text-3xl">{score.toString().padStart(4, '0')}</span>
+                        </div>
+                        <span className="text-sm text-white font-bold animate-pulse tracking-widest uppercase">
+                            USE W,A,S,D TO EAT PELLETS & MEET TEAM
+                        </span>
+                    </div>
+
+                    {/* Scrollable Map Area */}
+                    <div className="flex-grow relative overflow-x-auto overflow-y-hidden chat-scrollbar bg-[#000000]">
+                        <div className="relative min-w-[1400px] h-full retro-grid-bg mx-auto px-4">
+                            <SectorOutlines />
+
+                            {/* Pellets (豆豆) - 放大尺寸與發光效果，讓走道更明顯 */}
+                            {dots.map(dot => !dot.eaten && (
+                                <div key={dot.id} className="absolute w-[8px] h-[8px] bg-yellow-300 rounded-full shadow-[0_0_8px_yellow]"
+                                     style={{ left: `${dot.x}%`, top: `${dot.y}%`, transform: 'translate(-50%, -50%)' }} />
+                            ))}
+
+                            {/* Employee Badges (橫向科技膠囊排版，姓名絕對不會被遮住) */}
+                            {employees.map(emp => (
+                                <div 
+                                    key={emp.id}
+                                    onClick={() => setActiveEmp(emp)}
+                                    className="absolute flex items-center employee-badge rounded-full pr-3 pl-1 py-1 z-10 hover:z-50 group transition-all duration-300 hover:scale-110 cursor-pointer hover:border-[#00fbff] hover:bg-black"
+                                    style={{ left: `${emp.x}%`, top: `${emp.y}%`, transform: 'translate(-50%, -50%)', minWidth: '110px' }}
+                                >
+                                    {/* 圓形頭像 */}
+                                    <div className={`relative w-10 h-10 rounded-full flex items-center justify-center border-2 border-currentColor ${emp.color} bg-slate-800 shadow-[0_0_10px_currentColor] animate-working shrink-0`}>
+                                        <span className="text-xl relative z-10 drop-shadow-md">{emp.icon}</span>
+                                        {activeEmp?.id === emp.id && (
+                                            <div className="absolute -top-6 -right-2 text-2xl animate-bounce-small z-20">💬</div>
+                                        )}
+                                    </div>
+
+                                    {/* 姓名與職稱 (橫向排列) */}
+                                    <div className="flex flex-col text-left ml-2 overflow-hidden">
+                                        <span className={`text-[12px] font-bold whitespace-nowrap ${emp.color}`}>{emp.name}</span>
+                                        <span className="text-[9px] text-slate-300 whitespace-nowrap">{emp.title}</span>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* Pac-Man Player Character */}
+                            <div 
+                                className="absolute z-40 transition-all duration-[100ms] ease-linear flex flex-col items-center pointer-events-none"
+                                style={{ left: `${playerPos.x}%`, top: `${playerPos.y}%`, transform: 'translate(-50%, -50%)' }}
+                            >
+                                <div className="text-xs bg-white text-black font-black px-2 py-0.5 rounded-sm mb-2 shadow-[0_0_10px_white] whitespace-nowrap">
+                                    {playerName || 'PLAYER'}
+                                </div>
+                                <div className="w-8 h-8 relative" style={{ transform: `rotate(${playerAngle}deg)` }}>
+                                    <div className="pacman-body"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Dialogue Box (下方固定對話框) */}
+                    <div className="h-[220px] bg-black border-t-4 border-[#00fbff] p-6 flex gap-6 z-20 shrink-0">
+                        {activeEmp ? (
+                            <div key={activeEmp.id} className="animate-in fade-in slide-in-from-bottom-4 duration-300 flex w-full gap-6 items-start">
+                                {/* 說話者全息大頭貼 */}
+                                <div className={`flex-shrink-0 colleague-avatar-large ${activeEmp.color} mt-2`}>
+                                    <span className="relative z-10 drop-shadow-lg text-6xl">{activeEmp.icon}</span>
+                                </div>
+                                {/* 說話內容 */}
+                                <div className="text-white text-base leading-relaxed overflow-y-auto chat-scrollbar pr-4 w-full font-sans bg-[#0c122b] p-5 rounded-lg border-2 border-slate-600 h-full">
+                                    <p className="font-black text-yellow-300 text-xl mb-2 flex items-baseline gap-3">
+                                        【{activeEmp.dept}】{activeEmp.name} 
+                                        <span className="text-sm font-bold text-slate-400 uppercase">{activeEmp.enName}</span>
+                                        <span className="text-xs bg-[#00fbff]/20 text-[#00fbff] px-2 py-0.5 rounded ml-2">{activeEmp.title}</span>
+                                    </p>
+                                    <div className="space-y-2 text-slate-100 font-bold text-lg tracking-wide">
+                                        {activeEmp.dialogue.map((line, idx) => (
+                                            <p key={idx} className={idx === 0 ? "text-[#00fbff]" : ""}>{line}</p>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-yellow-400 animate-pulse font-black tracking-widest bg-[#0c122b] rounded-lg border-2 border-yellow-400/30">
+                                <span className="text-4xl mb-3">🎮</span>
+                                <span className="text-lg">READY! 請操作小精靈去吃點點，並認識辦公室的大家！</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
             );
         };
 
         const App = () => {
-            const [activeTab, setActiveTab] = useState('level1');
+            const [activeTab, setActiveTab] = useState('culture');
             const [playerName, setPlayerName] = useState('');
             const [playerDept, setPlayerDept] = useState('');
             const [completedTasks, setCompletedTasks] = useState([]);
@@ -161,59 +493,10 @@
             const [onboardingStep, setOnboardingStep] = useState(0); 
             const [isInitialLoading, setIsInitialLoading] = useState(true);
 
-            // AI Chat State
-            const [chatMessages, setChatMessages] = useState([{ role: 'model', content: '你好！我是 Pula。已經為您更新了雲端圖書館的中文說明囉！' }]);
+            const [chatMessages, setChatMessages] = useState([{ role: 'model', content: '你好！我是 Pula。有任何問題都可以直接問我喔！' }]);
             const [userInput, setUserInput] = useState('');
             const [isAiLoading, setIsAiLoading] = useState(false);
             const chatEndRef = useRef(null);
-
-            const trainingData = {
-                social: [
-                    { id: 's1', name: '官網精選案例', url: 'https://www.arplanet.com.tw/', type: 'WEB', memo: '認識公司官網案例' },
-                    { id: 's2', name: '公司 Youtube 頻道', url: 'https://www.youtube.com/user/arplanet2', type: 'VIDEO', memo: '追蹤與訂閱' },
-                    { id: 's3', name: 'FB (下一秒製造所)', url: 'https://www.facebook.com/arplanet1/', type: 'SOCIAL', memo: '按讚掌握動態' },
-                    { id: 's4', name: 'IG (下一秒製造所)', url: 'https://www.instagram.com/arplanet.tw/', type: 'SOCIAL', memo: '追蹤視覺饗宴' },
-                    { id: 's5', name: 'Mew_IG', url: 'https://www.instagram.com/mew_mew_xr/', type: 'SOCIAL', memo: 'Metaverse Life' },
-                    { id: 's6', name: '普拉_IG', url: 'https://www.instagram.com/xr_pula_daily/', type: 'SOCIAL', memo: 'Pula Daily' },
-                    { id: 's7', name: 'Thread (下一秒製造所)', url: 'https://www.threads.net/@arplanet.tw', type: 'SOCIAL', memo: '按讚掌握動態' },
-                    { id: 's8', name: 'Podcast (下一秒製造所)', url: 'https://podcasts.apple.com/tw/podcast/%E4%B8%8B%E4%B8%80%E7%A7%92%E8%A3%BD%E9%80%A0%E6%89%80/id1616439770', type: 'AUDIO', memo: '請加入追蹤' }
-                ],
-                winkiss: [
-                    { id: 'w1', name: '1-1【winkiss】產品介紹簡報', url: 'https://docs.google.com/presentation/d/1KBeDulhzx6rJR-VmOA7E2OtreP6dCQul/edit', type: 'PPT', memo: 'PPT共34頁' },
-                    { id: 'w2', name: '2-1【winkiss】產品介紹影片', url: 'https://youtu.be/gtaod70-6rM', type: 'VIDEO', memo: '影片21分鐘' },
-                    { id: 'w3', name: 'winkiss 後台教學影片', url: 'https://youtu.be/qDITk1-dIUM', type: 'VIDEO', memo: '後台操作必看' },
-                    { id: 'w4', name: '【winkiss】案例網址', url: 'https://docs.google.com/spreadsheets/d/1flxW11ISTswFLZ6luGbRsMnNGOIO-BhpeRnobKJkdy/edit', type: 'SHEET', memo: '體驗實際客戶案例' },
-                    { id: 'w5', name: '3-1 【winkiss】素材規格', url: 'https://docs.google.com/presentation/d/1KBeDulhzx6rJR-VmOA7E2OtreP6dCQul/edit', type: 'PPT', memo: 'PPT共14頁' }
-                ],
-                marq: [
-                    { id: 'm1', name: '認識 marq+', url: 'https://drive.google.com/drive/folders/1F1Z5eCBnM-Xn2R8q4-kNllmsqy20VR2c', type: 'PPT', memo: 'PPT共61頁' },
-                    { id: 'm2', name: 'marq+ 後台解說影片', url: 'https://youtu.be/8On2YvcZV60', type: 'VIDEO', memo: '影片33分鐘' },
-                    { id: 'm3', name: 'marq+ 後台上架練習', url: 'http://mg.plus.marq.com.tw/', type: 'PRACTICE', memo: '帳號向 Sophy 申請' },
-                    { id: 'm4', name: 'marq+ 素材規格', url: 'https://docs.google.com/presentation/d/1cgwjml_kberYXGB9P13WnAiTH4zeYm2/edit', type: 'PPT', memo: 'PPT共48頁' },
-                    { id: 'm5', name: 'marq+ 內訓課程', url: 'https://drive.google.com/file/d/1tVPMjkx1m60tic2F51073-F8M19Bex9/view', type: 'PPT', memo: 'AR設計技巧' },
-                    { id: 'm6', name: '組合模組課程', url: 'https://youtu.be/181PtvOGR_O', type: 'VIDEO', memo: '實際編輯示範' }
-                ],
-                xr: [
-                    { id: 'x1', name: 'XR 基礎概論', url: 'https://docs.google.com/presentation/d/10ZHNwKBMwFfvRd-Nyolz9C-NEe6Eo18k/edit', type: 'PPT', memo: 'PPT共63頁' },
-                    { id: 'x2', name: 'AR 擴增實境創意案例', url: 'https://docs.google.com/presentation/d/1jOTWDAadgB3Bbr8oDue-Isy4BJUPi6S44zzWvIhXciA/edit', type: 'PPT', memo: 'PPT共61頁' },
-                    { id: 'x3', name: 'VR 體感學習簡報', url: 'https://docs.google.com/presentation/d/110zTOF70xm9oQKCxwiHZw_rxzP1IzEtO/edit', type: 'PPT', memo: 'PPT共56頁' },
-                    { id: 'x4', name: '閱讀《AR擴增實境創新思維》', url: 'https://www.books.com.tw/products/0010863008', type: 'BOOK', memo: '向管理部索取' }
-                ],
-                admin: [
-                    { id: 'a1', name: '人事出勤系統 (打卡)', url: 'https://hrm.mavohr.com/tube', type: 'TOOL', memo: '用於打卡、請假' },
-                    { id: 'a2', name: '同事介紹/座位表', url: 'https://docs.google.com/spreadsheets/d/1tMFIG21Pa0Wwel7e4bdYnmOxrZyFmVkmu7vr5iXsWs/edit', type: 'LINK', memo: '認識公司部門' },
-                    { id: 'a3', name: '會議室租用系統', url: 'http://bmr.isi999.com.tw/', type: 'LINK', memo: 'ID: 29151337 / PW: arplanet' },
-                    { id: 'a4', name: '提案技巧範本', url: 'https://docs.google.com/spreadsheets/d/1F0wObkb_UVluk3zTk4pXh3bA4A6jVICMzyOhCjH3Ng0/edit', type: 'LINK', memo: '提案範本' },
-                    { id: 'a5', name: '設計部專案時間表', url: 'https://docs.google.com/spreadsheets/d/1YyudKr1RWwz2HPtPfIXox11-rd5p52TW6R6aC0aAHBI/edit', type: 'FORM', memo: '美術需求填寫' }
-                ],
-                bonus: [
-                    { id: 'v1', name: '2021 XR 行銷技法', url: 'https://www.youtube.com/watch?v=2Rn9fu1WSD8', type: 'SEMINAR', memo: '了解 XR 行銷' },
-                    { id: 'v2', name: 'WebAR 應用與技術解析', url: 'https://youtu.be/cPTurF6GFF4', type: 'SEMINAR', memo: 'WebAR 解析' },
-                    { id: 'v3', name: 'AI 工作術營運中心', url: 'https://youtu.be/r2cCgLyFODE', type: 'SEMINAR', memo: 'AI 工具應用' },
-                    { id: 'v4', name: 'LLM 原理 ChatGPT', url: 'https://youtu.be/tKoxqZP4xAw', type: 'SEMINAR', memo: 'LLM 原理' },
-                    { id: 'v5', name: 'Stable Diffusion Workshop', url: 'https://youtu.be/HlifvsjcZLk', type: 'SEMINAR', memo: 'AI 繪圖' }
-                ]
-            };
 
             useEffect(() => {
                 const n = localStorage.getItem('arplanet_player_name');
@@ -244,62 +527,36 @@
                 setProgress(all.length ? Math.round((completedTasks.length / all.length) * 100) : 0);
             }, [completedTasks, playerName, playerDept, onboardingStep]);
 
-            // 自動滾動聊天室到底部
             useEffect(() => {
                 if (activeTab === 'level-ai' && chatEndRef.current) {
                     chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
                 }
             }, [chatMessages, activeTab]);
 
-            // ==========================================
-            // 處理 AI 對話傳送
-            // ==========================================
             const handleSend = async (e) => {
                 e.preventDefault();
                 if (!userInput.trim() || isAiLoading) return;
-                
                 const msg = userInput; 
-                setUserInput(''); // 清空輸入框
-                
-                // 先把使用者的訊息顯示在畫面上
+                setUserInput(''); 
                 setChatMessages(p => [...p, { role: 'user', content: msg }]);
-                setIsAiLoading(true); // 開啟讀取狀態
+                setIsAiLoading(true);
 
                 try {
-                    // 呼叫你的 API
                     const response = await fetch('https://chatbot-azure-chi-80.vercel.app/api/chat', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        // 依照你的要求，Payload 格式為 { "question" : "XXX" }
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ question: msg })
                     });
-
-                    if (!response.ok) {
-                        throw new Error(`通訊異常: ${response.status}`);
-                    }
-
+                    if (!response.ok) throw new Error(`通訊異常: ${response.status}`);
                     const data = await response.json();
-
-                    // 依照你的要求，取得回傳值中的 answer，並顯示在畫面上
-                    setChatMessages(p => [...p, { 
-                        role: 'model', 
-                        content: data.answer || "連線成功，但未獲取有效訊號。" 
-                    }]);
-
+                    setChatMessages(p => [...p, { role: 'model', content: data.answer || "連線成功，但未獲取有效訊號。" }]);
                 } catch (error) {
                     console.error("AI 系統連線錯誤:", error);
-                    // 發生錯誤時的防呆提示
-                    setChatMessages(p => [...p, { 
-                        role: 'model', 
-                        content: "⚠️ 警告：無法連接 API 伺服器，請確認網路狀態或跨域請求 (CORS) 設定。" 
-                    }]);
+                    setChatMessages(p => [...p, { role: 'model', content: "⚠️ 警告：無法連接 API 伺服器，請確認網路狀態或跨域請求 (CORS) 設定。" }]);
                 } finally {
-                    setIsAiLoading(false); // 關閉讀取狀態
+                    setIsAiLoading(false);
                 }
             };
-            // ==========================================
 
             const LevelButton = ({ id, icon, label, sub }) => (
                 <button onClick={() => { setActiveTab(id); setSearchTerm(''); }} className={`w-full group mb-3 transition-all ${activeTab === id ? '' : 'hover:translate-x-1'}`}>
@@ -344,7 +601,7 @@
                                     {onboardingStep === 0 && (
                                         <div className="space-y-6">
                                             <div className="portal-title text-3xl text-[#00fbff]">WELCOME TO AR PLANET</div>
-                                            <p className="text-sm font-bold leading-relaxed text-slate-300 italic">歡迎加入宇萌數位科技任務入口！系統正在偵測新 Operator 的生命訊號...</p>
+                                            <p className="text-sm font-bold leading-relaxed text-slate-300 italic">歡迎登艦！準備好探索宇萌數位科技的元宇宙了嗎？系統正在偵測新 Operator 的生命訊號...</p>
                                             <button onClick={() => setOnboardingStep(1)} className="engage-btn w-full py-4 text-xl">INITIALIZE IDENTITY</button>
                                         </div>
                                     )}
@@ -363,11 +620,12 @@
                                             <div className="relative">
                                                 <select autoFocus value={playerDept} onChange={e => setPlayerDept(e.target.value)} className="w-full bg-black/50 border-2 border-[#00fbff]/50 p-4 text-xl font-black text-[#00fbff] outline-none focus:border-white appearance-none cursor-pointer">
                                                     <option value="" disabled>SELECT SECTOR...</option>
-                                                    <option value="TECHNICAL">TECHNICAL</option>
-                                                    <option value="CREATIVE">CREATIVE</option>
-                                                    <option value="OPERATIONS">OPERATIONS</option>
-                                                    <option value="MANAGEMENT">MANAGEMENT</option>
-                                                    <option value="XRA">XRA</option>
+                                                    <option value="TECHNICAL">技術中心 (TECHNICAL)</option>
+                                                    <option value="CREATIVE">創意中心 (CREATIVE)</option>
+                                                    <option value="OPERATIONS">營運中心 (OPERATIONS)</option>
+                                                    <option value="MANAGEMENT">管理中心 (MANAGEMENT)</option>
+                                                    <option value="XRA">XRA協會 (XRA)</option>
+                                                    <option value="CEO">執行長辦公室 (CEO)</option>
                                                 </select>
                                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#00fbff]">▼</div>
                                             </div>
@@ -379,9 +637,9 @@
                                             <p className="text-xs font-black text-[#00fbff] uppercase tracking-widest">Tutorial Phase:</p>
                                             <h2 className="text-xl font-black italic">新手指南</h2>
                                             <ul className="text-sm md:text-base space-y-4 font-bold text-slate-300">
-                                                <li className="flex items-center gap-2"><span className="text-[#00ff00]">●</span> 點擊左側「星星」收集能量星辰。</li>
-                                                <li className="flex items-center gap-2"><span className="text-[#00fbff]">●</span> 使用「雲端圖書館」掃描共享硬碟。</li>
-                                                <li className="flex items-center gap-2"><span className="text-yellow-400">●</span> 點擊左側「AI 助理」與普拉進行 AI 對話。</li>
+                                                <li className="flex items-center gap-2"><span className="text-[#00ff00]">●</span> 依序完成左側的訓練階段，點擊「星星」推進進度。</li>
+                                                <li className="flex items-center gap-2"><span className="text-[#00fbff]">●</span> 找不到資料？請使用「雲端圖書館」進行掃描。</li>
+                                                <li className="flex items-center gap-2"><span className="text-yellow-400">●</span> 遇到任何疑問，隨時呼叫左側的「AI 助理 Pula」。</li>
                                             </ul>
                                             <button onClick={() => setOnboardingStep(4)} className="engage-btn w-full py-4 text-xl">LOCKED AND LOADED</button>
                                         </div>
@@ -416,11 +674,12 @@
                         </div>
 
                         <nav className="flex-grow overflow-y-auto chat-scrollbar pr-2">
-                            <LevelButton id="level1" icon="rocket-color" label="認識宇萌" sub="WORLD 1-1" />
-                            <LevelButton id="level2" icon="box-color" label="產品與素材" sub="WORLD 1-2" />
-                            <LevelButton id="level3" icon="map-color" label="XR 知識庫" sub="WORLD 1-3" />
-                            <LevelButton id="level4" icon="doc-color" label="行政與表單" sub="WORLD 1-4" />
-                            <LevelButton id="level5" icon="film-color" label="精選分享會" sub="BONUS" />
+                            <LevelButton id="culture" icon="culture-color" label="宇萌星系指南" sub="PHASE 1 - 文化與社群" />
+                            <LevelButton id="level-map" icon="game-color" label="吃點點認識同事" sub="PHASE 2 - 總部迷宮" />
+                            <LevelButton id="admin" icon="admin-color" label="裝備與補給" sub="PHASE 3 - 行政與資源" />
+                            <LevelButton id="xr" icon="xr-color" label="XR 知識庫" sub="PHASE 4 - 產品與技術" />
+                            <LevelButton id="workflow" icon="workflow-color" label="聯合作戰" sub="PHASE 5 - 跨部門協作" />
+                            <LevelButton id="bonus" icon="bonus-color" label="精選分享會" sub="BONUS - 進階技術" />
                             
                             <div className="mt-6 border-t border-[#00fbff]/10 pt-6">
                                 <LevelButton id="level-search" icon="search-color" label="雲端圖書館" sub="DATABASE SCAN" />
@@ -434,7 +693,9 @@
                                 <span className="text-[#00fbff] text-xs font-black">{progress}%</span>
                             </div>
                             <div className="w-full h-3 bg-black/50 border border-[#00fbff]/20 p-0.5"><div className="h-full bg-[#00ff00] transition-all duration-1000 shadow-[0_0_10px_#00ff00]" style={{ width: `${progress}%` }}></div></div>
-                            <p className="text-[8px] text-center text-[#00fbff] font-black mt-2 tracking-widest opacity-60 uppercase">Core Power Stability</p>
+                            <p className="text-[8px] text-center text-[#00fbff] font-black mt-2 tracking-widest opacity-60 uppercase">
+                                {progress === 100 ? 'MISSION ACCOMPLISHED' : 'CORE POWER STABILITY'}
+                            </p>
                         </div>
                     </aside>
 
@@ -454,8 +715,14 @@
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 bg-black flex items-center justify-center font-black text-xl text-cyan-400 border border-cyan-400">!</div>
                                         <div>
-                                            <div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div><span className="text-[10px] font-black text-cyan-400 tracking-widest uppercase">Incoming Message</span></div>
-                                            <p className="text-sm font-bold italic">點擊左側星星收集能量，完成新人太空任務！</p>
+                                            <div className="flex items-center gap-2 mb-1"><div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div><span className="text-[10px] font-black text-cyan-400 tracking-widest uppercase">
+                                                {progress === 100 ? 'SYSTEM OVERRIDE' : 'Incoming Message'}
+                                            </span></div>
+                                            <p className="text-sm font-bold italic">
+                                                {progress === 100 
+                                                    ? '恭喜完成所有基礎訓練任務！請截圖此畫面，向 HR 領取宇萌專屬新人禮包！' 
+                                                    : '請依照左側的 PHASE 1 到 PHASE 5 順序完成報到任務，點擊星星收集能量！'}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -515,9 +782,11 @@
                                         </button>
                                     </form>
                                 </div>
+                            ) : activeTab === 'level-map' ? (
+                                <RPGMap playerName={playerName} />
                             ) : (
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-8">
-                                    {trainingData[activeTab === 'level1' ? 'social' : activeTab === 'level2' ? 'winkiss' : activeTab === 'level3' ? 'marq' : activeTab === 'level4' ? 'admin' : 'bonus'].map(item => <Card key={item.id} item={item} />)}
+                                    {trainingData[activeTab]?.map(item => <Card key={item.id} item={item} />)}
                                 </div>
                             )}
                         </div>
