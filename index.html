@@ -366,25 +366,36 @@
                 setActiveEmp(nearest);
             }, [playerPos]);
 
-            // 繪製部門外框 (讓發光牆壁避開走道)
-            const SectorOutlines = () => (
-                <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
-                    <rect x="71%" y="7%" width="22%" height="10%" fill="none" className="maze-wall text-red-500" strokeDasharray="5,5" opacity="0.8"/>
-                    <text x="73%" y="15%" fill="#ef4444" fontSize="16" fontWeight="bold" opacity="0.8">執行長與總經理室</text>
-                    
-                    <rect x="9%" y="24%" width="37%" height="68%" fill="none" className="maze-wall text-yellow-500" opacity="0.4"/>
-                    <text x="11%" y="90%" fill="#eab308" fontSize="24" fontWeight="900" opacity="0.5">技術中心</text>
+            // 繪製部門外框 (支援懸浮顯示部門名稱，不再擋住畫面)
+            const SectorOutlines = () => {
+                const zones = [
+                    { id: 'ceo', name: '執行長與總經理室', left: '71%', top: '7%', width: '22%', height: '10%', color: 'text-red-500 border-red-500 hover:bg-red-500/20 bg-red-500/5' },
+                    { id: 'tech', name: '技術中心', left: '9%', top: '24%', width: '37%', height: '68%', color: 'text-yellow-500 border-yellow-500 hover:bg-yellow-500/20 bg-yellow-500/5' },
+                    { id: 'ops', name: '營運中心與協會', left: '50%', top: '24%', width: '24%', height: '56%', color: 'text-green-500 border-green-500 hover:bg-green-500/20 bg-green-500/5' },
+                    { id: 'creative', name: '創意中心', left: '77%', top: '36%', width: '19%', height: '32%', color: 'text-blue-500 border-blue-500 hover:bg-blue-500/20 bg-blue-500/5' },
+                    { id: 'admin', name: '管理中心 (316室)', left: '77%', top: '78%', width: '19%', height: '18%', color: 'text-cyan-500 border-cyan-500 hover:bg-cyan-500/20 bg-cyan-500/5' }
+                ];
 
-                    <rect x="50%" y="24%" width="24%" height="56%" fill="none" className="maze-wall text-green-500" opacity="0.4"/>
-                    <text x="52%" y="78%" fill="#22c55e" fontSize="24" fontWeight="900" opacity="0.5">營運中心與協會</text>
-
-                    <rect x="77%" y="36%" width="19%" height="32%" fill="none" className="maze-wall text-blue-500" opacity="0.4"/>
-                    <text x="79%" y="66%" fill="#3b82f6" fontSize="20" fontWeight="900" opacity="0.5">創意中心</text>
-
-                    <rect x="77%" y="78%" width="19%" height="18%" fill="none" className="maze-wall text-cyan-500" strokeDasharray="5,5" opacity="0.4"/>
-                    <text x="79%" y="94%" fill="#06b6d4" fontSize="16" fontWeight="900" opacity="0.6">管理中心 (316室)</text>
-                </svg>
-            );
+                return (
+                    <>
+                        {zones.map(zone => (
+                            <div
+                                key={zone.id}
+                                className={`absolute border-[3px] border-dashed rounded-2xl group transition-all duration-500 cursor-crosshair hover:border-solid ${zone.color}`}
+                                style={{ 
+                                    left: zone.left, top: zone.top, width: zone.width, height: zone.height,
+                                    boxShadow: 'inset 0 0 15px currentColor, 0 0 10px currentColor'
+                                }}
+                            >
+                                {/* 懸浮時才顯示的部門名稱牌 (浮起到最上層) */}
+                                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/90 px-8 py-4 rounded-xl border-2 border-current text-3xl md:text-4xl font-black whitespace-nowrap z-[100] shadow-[0_0_30px_currentColor] pointer-events-none tracking-widest backdrop-blur-md group-hover:scale-110">
+                                    {zone.name}
+                                </div>
+                            </div>
+                        ))}
+                    </>
+                );
+            };
 
             return (
                 <div className="w-full border-4 border-[#00fbff] rounded-lg bg-black flex flex-col shadow-[0_0_30px_rgba(0,251,255,0.3)] h-[850px] overflow-hidden">
@@ -399,9 +410,10 @@
                         </span>
                     </div>
 
-                    {/* Scrollable Map Area */}
+                    {/* Scrollable Map Area (已設定 w-full 來配合加大的主版面) */}
                     <div className="flex-grow relative overflow-x-auto overflow-y-hidden chat-scrollbar bg-[#000000]">
-                        <div className="relative min-w-[1400px] h-full retro-grid-bg mx-auto px-4">
+                        {/* 這裡我們將 min-w 從 1400px 降低到 1050px，這樣在滿版的寬螢幕上就不會出現橫向捲軸 */}
+                        <div className="relative w-full min-w-[1050px] h-full retro-grid-bg mx-auto px-4">
                             <SectorOutlines />
 
                             {/* Pellets (豆豆) - 放大尺寸與發光效果，讓走道更明顯 */}
@@ -410,13 +422,13 @@
                                      style={{ left: `${dot.x}%`, top: `${dot.y}%`, transform: 'translate(-50%, -50%)' }} />
                             ))}
 
-                            {/* Employee Badges (橫向科技膠囊排版，姓名絕對不會被遮住) */}
+                            {/* Employee Badges (橫向科技膠囊排版，縮小 min-width 避免重疊) */}
                             {employees.map(emp => (
                                 <div 
                                     key={emp.id}
                                     onClick={() => setActiveEmp(emp)}
-                                    className="absolute flex items-center employee-badge rounded-full pr-3 pl-1 py-1 z-10 hover:z-50 group transition-all duration-300 hover:scale-110 cursor-pointer hover:border-[#00fbff] hover:bg-black"
-                                    style={{ left: `${emp.x}%`, top: `${emp.y}%`, transform: 'translate(-50%, -50%)', minWidth: '110px' }}
+                                    className="absolute flex items-center employee-badge rounded-full pr-2 pl-1 py-1 z-10 hover:z-50 group transition-all duration-300 hover:scale-110 cursor-pointer hover:border-[#00fbff] hover:bg-black"
+                                    style={{ left: `${emp.x}%`, top: `${emp.y}%`, transform: 'translate(-50%, -50%)', minWidth: '95px' }}
                                 >
                                     {/* 圓形頭像 */}
                                     <div className={`relative w-10 h-10 rounded-full flex items-center justify-center border-2 border-currentColor ${emp.color} bg-slate-800 shadow-[0_0_10px_currentColor] animate-working shrink-0`}>
@@ -699,9 +711,9 @@
                         </div>
                     </aside>
 
-                    {/* Main Content Area */}
-                    <main className="flex-grow p-10 md:p-14 relative overflow-y-auto h-screen">
-                        <div className="max-w-6xl mx-auto">
+                    {/* Main Content Area - 這裡將 max-w 加大到 1700px 來確保滿版顯示 */}
+                    <main className="flex-grow p-5 md:p-8 relative overflow-y-auto h-screen">
+                        <div className="w-full max-w-[1700px] mx-auto">
                             <div className="flex flex-col md:flex-row gap-6 mb-16 items-stretch">
                                 <div className="bg-[#161b33] border border-[#00fbff]/20 p-6 flex items-center gap-6 min-w-[300px]">
                                     <div className="w-12 h-12 bg-blue-600/10 border border-blue-600/40 flex items-center justify-center relative overflow-hidden"><PulaGraphic className="w-14 h-14 absolute top-1" /></div>
